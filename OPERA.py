@@ -27,6 +27,10 @@ import resources
 # Import the code for the dialog
 from OPERA_dialog import OperaDialog
 import os.path
+import urllib
+import json
+import processing
+from qgis.core import *
 
 
 class Opera:
@@ -190,4 +194,7 @@ class Opera:
         if result:
             # Do something useful here - delete the line containing pass and
             # substitute with your code.
-            pass
+            #layer = iface.addVectorLayer("/home/dpts/Bureau/Lien vers plugins/Opera/data/05/thabor/croquis.kml", "salut", "ogr")
+            #layer.extent().xMinimum()
+            #processing.runalg("qgis:reprojectlayer", layer, "EPSG:2154", "salut")
+            print('hey')
