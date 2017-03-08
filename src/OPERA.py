@@ -31,6 +31,7 @@ import urllib
 import json
 import processing
 from qgis.core import *
+import numpy as np
 
 
 class Opera:
@@ -192,9 +193,29 @@ class Opera:
         result = self.dlg.exec_()
         # See if OK was pressed
         if result:
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
-            #layer = iface.addVectorLayer("/home/dpts/Bureau/Lien vers plugins/Opera/data/05/thabor/croquis.kml", "salut", "ogr")
-            #layer.extent().xMinimum()
-            #processing.runalg("qgis:reprojectlayer", layer, "EPSG:2154", "salut")
-            print('hey')
+            # pour reprojeter en Lambert 93 
+            #processing.runalg("qgis:reprojectlayer", thabor_area, "EPSG:2154", "thabor")
+            thabor_area = QgsVectorLayer("/home/dpts/Bureau/Lien vers plugins/Opera/data/05/thabor/shp/thabor.shp", "thabor", "ogr")
+            xmin = thabor_area.extent().xMinimum()/1000
+            xmax = thabor_area.extent().xMaximum()/1000
+            ymin = thabor_area.extent().yMinimum()/1000
+            ymax = thabor_area.extent().yMaximum()/1000
+            
+            mnt_list = []
+            for x in range (int((xmin//5)*5),int(np.ceil(xmax/5)*5),5):
+                for y in range (int((ymin//5)*5+5),int(np.ceil(ymax/5)*5+5),5):
+                    x_str = str(x)
+                    y_str = str(y)
+                    if x < 1000:
+                        x_str = "0" + str(x)
+                    if y < 1000:
+                        y_str = "0" + str(y)
+                    path = "/home/dpts/Bureau/Lien vers plugins/Opera/data/05/mnt/"
+                    path += "RGEALTI_FXX_" + x_str + "_" + y_str + "_MNT_LAMB93_IGN69.tif"
+                    tile_mnt = QgsRasterLayer(path, "thabor_" + x_str + "_" + y_str)
+                    print(tile_mnt.isValid())
+                    mnt_list.append(tile_mnt)
+                    
+            QgsMapLayerRegistry.instance().addMapLayers(mnt_list)      
+                    
+            print(mnt_list)
