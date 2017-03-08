@@ -194,48 +194,84 @@ class Opera:
         # See if OK was pressed
         if result:
             # pour reprojeter en Lambert 93 
-            #processing.runalg("qgis:reprojectlayer", thabor_area, "EPSG:2154", "thabor")
+            # processing.runalg("qgis:reprojectlayer", thabor_area, "EPSG:2154", "thabor")
+
+            # Importation du shp qui décrit la zone et des ses coordonnées maximales et minimales
             thabor_area = QgsVectorLayer("/home/dpts/Bureau/Lien vers plugins/Opera/data/05/thabor/shp/thabor.shp", "thabor", "ogr")
             xmin = thabor_area.extent().xMinimum()/1000
             xmax = thabor_area.extent().xMaximum()/1000
             ymin = thabor_area.extent().yMinimum()/1000
             ymax = thabor_area.extent().yMaximum()/1000
             
+
+            # On va chercher toutes les tuiles du MNT correspondant aux bornes du shp
             mnt_list = []
+
             for x in range (int((xmin//5)*5),int(np.ceil(xmax/5)*5),5):
                 for y in range (int((ymin//5)*5+5),int(np.ceil(ymax/5)*5+5),5):
+
                     x_str = str(x)
                     y_str = str(y)
+
                     if x < 1000:
                         x_str = "0" + str(x)
                     if y < 1000:
                         y_str = "0" + str(y)
+
                     path = "/home/dpts/Bureau/Lien vers plugins/Opera/data/05/mnt/"
                     path += "RGEALTI_FXX_" + x_str + "_" + y_str + "_MNT_LAMB93_IGN69.tif"
                     tile_mnt = QgsRasterLayer(path, "thabor_" + x_str + "_" + y_str)
+
+                    # Si la couche est valide, on l'ajoute à la listte de couches
                     if tile_mnt.isValid():
                         mnt_list.append(tile_mnt)
                     
 #            QgsMapLayerRegistry.instance().addMapLayers(mnt_list)
-                    
+                   
+
+
             #Calcul du MNT de la zone entière
             mnt_path = "/home/dpts/Bureau/Lien vers plugins/Opera/data/05/thabor/mnt.tif"
-            processing.runalg("gdalogr:merge",mnt_list,False,False,5,mnt_path)
             full_dem = QgsRasterLayer(mnt_path, "thabor_full_dem")
-            QgsMapLayerRegistry.instance().addMapLayer(full_dem)
+
+            if not full_dem.isValid():
+                processing.runalg("gdalogr:merge",mnt_list,False,False,5,mnt_path)
+                full_dem = QgsRasterLayer(mnt_path, "thabor_full_dem")
+                
+            # QgsMapLayerRegistry.instance().addMapLayer(full_dem)
             
+
             #Calcul de la carte des pentes
             slope_path = "/home/dpts/Bureau/Lien vers plugins/Opera/data/05/thabor/pente.tif"
-            processing.runalg("gdalogr:slope",full_dem,1,False,False,False,1.0,slope_path)
             slope_map = QgsRasterLayer(slope_path, "thabor_slopes")
-            QgsMapLayerRegistry.instance().addMapLayer(slope_map)
+
+            if not slope_map.isValid():
+                processing.runalg("gdalogr:slope",full_dem,1,False,False,False,1.0,slope_path)
+                slope_map = QgsRasterLayer(slope_path, "thabor_slopes")
             
+            # QgsMapLayerRegistry.instance().addMapLayer(slope_map)
+            
+
+
             #Calcul de la carte des orientations
             aspect_path = "/home/dpts/Bureau/Lien vers plugins/Opera/data/05/thabor/orientation.tif"
-            processing.runalg("gdalogr:aspect",full_dem,1,False,False,False,False,aspect_path)
             aspect_map = QgsRasterLayer(aspect_path, "thabor_aspect")
-            QgsMapLayerRegistry.instance().addMapLayer(aspect_map)
+
+            if not aspect_map.isValid():
+                processing.runalg("gdalogr:aspect",full_dem,1,False,False,False,False,aspect_path)
+                aspect_map = QgsRasterLayer(aspect_path, "thabor_aspect")
+
+            # QgsMapLayerRegistry.instance().addMapLayer(aspect_map)
             
-            
+
+
+            #Récuperation des données météo france du BRA
+            url_meteo_fr = "http://www.meteofrance.com/mf3-rpc-portlet/rest/enneigement/bulletins/cartouches/AVDEPT05"
+            response = urllib.urlopen(url_meteo_fr)
+            bulletin_json = json.loads(response.read())
+            for mass in bulletin_json:
+                if mass["massif"]["slug"] == "thabor":
+                    print(mass["risque"]["pente"]["ne"])
+
             
             print("hey")
