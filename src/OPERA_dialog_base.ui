@@ -90,7 +90,7 @@
     <string>Chargement automatique du BRA</string>
    </property>
   </widget>
-  <widget class="QComboBox" name="comboBox">
+  <widget class="QComboBox" name="massifs">
    <property name="geometry">
     <rect>
      <x>170</x>
@@ -101,12 +101,7 @@
    </property>
    <item>
     <property name="text">
-     <string>M1</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>M2</string>
+     <string>Thabor</string>
     </property>
    </item>
   </widget>

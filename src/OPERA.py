@@ -32,6 +32,7 @@ import json
 import processing
 from qgis.core import *
 import numpy as np
+from skimage import io
 
 
 class Opera:
@@ -193,15 +194,20 @@ class Opera:
         result = self.dlg.exec_()
         # See if OK was pressed
         if result:
+            #Recupération du massif sur lequel on travail
+            massif_travail = self.dlg.massifs.currentText()
+            massif_travail = massif_travail.lower()
+
+
             # pour reprojeter en Lambert 93 
-            # processing.runalg("qgis:reprojectlayer", thabor_area, "EPSG:2154", "thabor")
+            # processing.runalg("qgis:reprojectlayer", area, "EPSG:2154", "massif")
 
             # Importation du shp qui décrit la zone et des ses coordonnées maximales et minimales
-            thabor_area = QgsVectorLayer("/home/dpts/Bureau/Lien vers plugins/Opera/data/05/thabor/shp/thabor.shp", "thabor", "ogr")
-            xmin = thabor_area.extent().xMinimum()/1000
-            xmax = thabor_area.extent().xMaximum()/1000
-            ymin = thabor_area.extent().yMinimum()/1000
-            ymax = thabor_area.extent().yMaximum()/1000
+            area = QgsVectorLayer("/home/dpts/Bureau/Lien vers plugins/Opera/data/05/" + massif_travail + "/shp/" + massif_travail + ".shp", massif_travail, "ogr")
+            xmin = area.extent().xMinimum()/1000
+            xmax = area.extent().xMaximum()/1000
+            ymin = area.extent().yMinimum()/1000
+            ymax = area.extent().yMaximum()/1000
             
 
             # On va chercher toutes les tuiles du MNT correspondant aux bornes du shp
@@ -220,7 +226,7 @@ class Opera:
 
                     path = "/home/dpts/Bureau/Lien vers plugins/Opera/data/05/mnt/"
                     path += "RGEALTI_FXX_" + x_str + "_" + y_str + "_MNT_LAMB93_IGN69.tif"
-                    tile_mnt = QgsRasterLayer(path, "thabor_" + x_str + "_" + y_str)
+                    tile_mnt = QgsRasterLayer(path, "" + massif_travail + "_" + x_str + "_" + y_str)
 
                     # Si la couche est valide, on l'ajoute à la listte de couches
                     if tile_mnt.isValid():
@@ -231,35 +237,35 @@ class Opera:
 
 
             #Calcul du MNT de la zone entière
-            mnt_path = "/home/dpts/Bureau/Lien vers plugins/Opera/data/05/thabor/mnt.tif"
-            full_dem = QgsRasterLayer(mnt_path, "thabor_full_dem")
+            mnt_path = "/home/dpts/Bureau/Lien vers plugins/Opera/data/05/" + massif_travail + "/mnt.tif"
+            full_dem = QgsRasterLayer(mnt_path, "" + massif_travail + "_full_dem")
 
             if not full_dem.isValid():
                 processing.runalg("gdalogr:merge",mnt_list,False,False,5,mnt_path)
-                full_dem = QgsRasterLayer(mnt_path, "thabor_full_dem")
+                full_dem = QgsRasterLayer(mnt_path, "" + massif_travail + "_full_dem")
                 
             # QgsMapLayerRegistry.instance().addMapLayer(full_dem)
             
 
             #Calcul de la carte des pentes
-            slope_path = "/home/dpts/Bureau/Lien vers plugins/Opera/data/05/thabor/pente.tif"
-            slope_map = QgsRasterLayer(slope_path, "thabor_slopes")
+            slope_path = "/home/dpts/Bureau/Lien vers plugins/Opera/data/05/" + massif_travail + "/pente.tif"
+            slope_map = QgsRasterLayer(slope_path, "" + massif_travail + "_slopes")
 
             if not slope_map.isValid():
                 processing.runalg("gdalogr:slope",full_dem,1,False,False,False,1.0,slope_path)
-                slope_map = QgsRasterLayer(slope_path, "thabor_slopes")
+                slope_map = QgsRasterLayer(slope_path, "" + massif_travail + "_slopes")
             
             # QgsMapLayerRegistry.instance().addMapLayer(slope_map)
             
 
 
             #Calcul de la carte des orientations
-            aspect_path = "/home/dpts/Bureau/Lien vers plugins/Opera/data/05/thabor/orientation.tif"
-            aspect_map = QgsRasterLayer(aspect_path, "thabor_aspect")
+            aspect_path = "/home/dpts/Bureau/Lien vers plugins/Opera/data/05/" + massif_travail + "/orientation.tif"
+            aspect_map = QgsRasterLayer(aspect_path, "" + massif_travail + "_aspect")
 
             if not aspect_map.isValid():
                 processing.runalg("gdalogr:aspect",full_dem,1,False,False,False,False,aspect_path)
-                aspect_map = QgsRasterLayer(aspect_path, "thabor_aspect")
+                aspect_map = QgsRasterLayer(aspect_path, "" + massif_travail + "_aspect")
 
             # QgsMapLayerRegistry.instance().addMapLayer(aspect_map)
             
@@ -270,8 +276,52 @@ class Opera:
             response = urllib.urlopen(url_meteo_fr)
             bulletin_json = json.loads(response.read())
             for mass in bulletin_json:
-                if mass["massif"]["slug"] == "thabor":
+                if mass["massif"]["slug"] == massif_travail:
                     print(mass["risque"]["pente"]["ne"])
 
-            
+            res = MRD(bulletin_json[5],slope_path,mnt_path)
             print("hey")
+
+
+
+
+
+def MRD(BRA_massif,slope_map_path,full_dem_path):
+
+    slope = np.array(io.imread(slope_map_path), dtype = float)
+    dem = np.array(io.imread(full_dem_path), dtype = float)
+    shape = slope.shape
+    res = nb.zeros(shape)
+    risque_ini = BRA_massif["risque"]["evolution"]["risqueInitial"]
+    for l in range(shape[0]):
+        for c in range (shape[1]):
+
+            risque = risque_ini
+            pente = slope[l][c]
+
+            if dem[l][c] > 9000000: #TODO: thershold
+                #risque = risque_evol
+                pass
+
+
+            if risque == 1:
+                if pente > 40:
+                    res[l][c] = 1
+
+            elif risque == 2:
+                if pente > 35:
+                    res[l][c] = 1
+
+            elif risque == 3:
+                if pente > 30:
+                    res[l][c] = 1
+
+            elif risque == 4:
+                if pente > 25:
+                    res[l][c] = 1
+
+            else:
+                res[l][c] = 1
+
+    io.imshow(res)
+    return res

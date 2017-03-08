@@ -48,11 +48,10 @@ class Ui_OperaDialogBase(object):
         self.checkBox = QtGui.QCheckBox(OperaDialogBase)
         self.checkBox.setGeometry(QtCore.QRect(10, 180, 271, 22))
         self.checkBox.setObjectName(_fromUtf8("checkBox"))
-        self.comboBox = QtGui.QComboBox(OperaDialogBase)
-        self.comboBox.setGeometry(QtCore.QRect(170, 20, 78, 27))
-        self.comboBox.setObjectName(_fromUtf8("comboBox"))
-        self.comboBox.addItem(_fromUtf8(""))
-        self.comboBox.addItem(_fromUtf8(""))
+        self.massifs = QtGui.QComboBox(OperaDialogBase)
+        self.massifs.setGeometry(QtCore.QRect(170, 20, 78, 27))
+        self.massifs.setObjectName(_fromUtf8("massifs"))
+        self.massifs.addItem(_fromUtf8(""))
 
         self.retranslateUi(OperaDialogBase)
         QtCore.QObject.connect(self.button_box, QtCore.SIGNAL(_fromUtf8("accepted()")), OperaDialogBase.accept)
@@ -65,6 +64,5 @@ class Ui_OperaDialogBase(object):
         self.radio_MRD.setText(_translate("OperaDialogBase", "MRD (debutant)", None))
         self.radio_MRP.setText(_translate("OperaDialogBase", "MRP (expert)", None))
         self.checkBox.setText(_translate("OperaDialogBase", "Chargement automatique du BRA", None))
-        self.comboBox.setItemText(0, _translate("OperaDialogBase", "M1", None))
-        self.comboBox.setItemText(1, _translate("OperaDialogBase", "M2", None))
+        self.massifs.setItemText(0, _translate("OperaDialogBase", "Thabor", None))
 
