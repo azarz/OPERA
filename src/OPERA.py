@@ -32,7 +32,6 @@ import json
 import processing
 from qgis.core import *
 import numpy as np
-from skimage import io
 
 
 class Opera:
@@ -288,40 +287,40 @@ class Opera:
 
 def MRD(BRA_massif,slope_map_path,full_dem_path):
 
-    slope = np.array(io.imread(slope_map_path), dtype = float)
-    dem = np.array(io.imread(full_dem_path), dtype = float)
-    shape = slope.shape
-    res = nb.zeros(shape)
-    risque_ini = BRA_massif["risque"]["evolution"]["risqueInitial"]
-    for l in range(shape[0]):
-        for c in range (shape[1]):
+    # slope = np.array(io.imread(slope_map_path), dtype = float)
+    # dem = np.array(io.imread(full_dem_path), dtype = float)
+    # shape = slope.shape
+    # res = nb.zeros(shape)
+    # risque_ini = BRA_massif["risque"]["evolution"]["risqueInitial"]
+    # for l in range(shape[0]):
+    #     for c in range (shape[1]):
 
-            risque = risque_ini
-            pente = slope[l][c]
+    #         risque = risque_ini
+    #         pente = slope[l][c]
 
-            if dem[l][c] > 9000000: #TODO: thershold
-                #risque = risque_evol
-                pass
+    #         if dem[l][c] > 9000000: #TODO: thershold
+    #             #risque = risque_evol
+    #             pass
 
 
-            if risque == 1:
-                if pente > 40:
-                    res[l][c] = 1
+    #         if risque == 1:
+    #             if pente > 40:
+    #                 res[l][c] = 1
 
-            elif risque == 2:
-                if pente > 35:
-                    res[l][c] = 1
+    #         elif risque == 2:
+    #             if pente > 35:
+    #                 res[l][c] = 1
 
-            elif risque == 3:
-                if pente > 30:
-                    res[l][c] = 1
+    #         elif risque == 3:
+    #             if pente > 30:
+    #                 res[l][c] = 1
 
-            elif risque == 4:
-                if pente > 25:
-                    res[l][c] = 1
+    #         elif risque == 4:
+    #             if pente > 25:
+    #                 res[l][c] = 1
 
-            else:
-                res[l][c] = 1
+    #         else:
+    #             res[l][c] = 1
 
-    io.imshow(res)
-    return res
+    # io.imshow(res)
+    # return res
