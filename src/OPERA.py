@@ -213,9 +213,29 @@ class Opera:
                     path = "/home/dpts/Bureau/Lien vers plugins/Opera/data/05/mnt/"
                     path += "RGEALTI_FXX_" + x_str + "_" + y_str + "_MNT_LAMB93_IGN69.tif"
                     tile_mnt = QgsRasterLayer(path, "thabor_" + x_str + "_" + y_str)
-                    print(tile_mnt.isValid())
-                    mnt_list.append(tile_mnt)
+                    if tile_mnt.isValid():
+                        mnt_list.append(tile_mnt)
                     
-            QgsMapLayerRegistry.instance().addMapLayers(mnt_list)      
+#            QgsMapLayerRegistry.instance().addMapLayers(mnt_list)
                     
-            print(mnt_list)
+            #Calcul du MNT de la zone entière
+            mnt_path = "/home/dpts/Bureau/Lien vers plugins/Opera/data/05/thabor/mnt.tif"
+            processing.runalg("gdalogr:merge",mnt_list,False,False,5,mnt_path)
+            full_dem = QgsRasterLayer(mnt_path, "thabor_full_dem")
+            QgsMapLayerRegistry.instance().addMapLayer(full_dem)
+            
+            #Calcul de la carte des pentes
+            slope_path = "/home/dpts/Bureau/Lien vers plugins/Opera/data/05/thabor/pente.tif"
+            processing.runalg("gdalogr:slope",full_dem,1,False,False,False,1.0,slope_path)
+            slope_map = QgsRasterLayer(slope_path, "thabor_slopes")
+            QgsMapLayerRegistry.instance().addMapLayer(slope_map)
+            
+            #Calcul de la carte des orientations
+            aspect_path = "/home/dpts/Bureau/Lien vers plugins/Opera/data/05/thabor/orientation.tif"
+            processing.runalg("gdalogr:aspect",full_dem,1,False,False,False,False,aspect_path)
+            aspect_map = QgsRasterLayer(aspect_path, "thabor_aspect")
+            QgsMapLayerRegistry.instance().addMapLayer(aspect_map)
+            
+            
+            
+            print("hey")
