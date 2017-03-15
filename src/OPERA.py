@@ -275,15 +275,15 @@ class Opera:
             url_meteo_fr = "http://www.meteofrance.com/mf3-rpc-portlet/rest/enneigement/bulletins/cartouches/AVDEPT05"
             response = urllib.urlopen(url_meteo_fr)
             bulletin_json = json.loads(response.read())
+
             for mass in bulletin_json:
                 if mass["massif"]["slug"] == massif_travail:
-                    print(mass["risque"]["pente"]["ne"])
+                    bulletin_massif = mass
 
-            res = MRD(bulletin_json[5],slope_path,mnt_path)
+            MRDMRE(bulletin_massif,slope_path,mnt_path)
             print("hey")
 
             
-
             # formula = '(A>2000)*(B>35)'
             # processing.runalg("gdalogr:rastercalculator",full_dem,1,slope_map,1,None,1,None,1,None,1,None,1,formula,"0",0,"","/home/dpts/Bureau/Lien vers plugins/Opera/data/05/" + massif_travail + "/out.tif")
             # aspect_map = QgsRasterLayer("/home/dpts/Bureau/Lien vers plugins/Opera/data/05/" + massif_travail + "/out.tif", "" + massif_travail + "_out")
@@ -291,12 +291,10 @@ class Opera:
 
 
 
-def MRD(BRA_massif,slope_map_path,full_dem_path):
+def MRDMRE(BRA_massif, slope_map_path, full_dem_path, MRE=False):
 
-    slope_map = QgsRasterLayer(slope_path, "slopes")
+    slope_map = QgsRasterLayer(slope_map_path, "slopes")
     full_dem = QgsRasterLayer(full_dem_path, "full_dem")
-
-    risque_ini = BRA_massif["risque"]["evolution"]["risqueInitial"]
 
     entries = []
     # Define slopes
@@ -304,43 +302,51 @@ def MRD(BRA_massif,slope_map_path,full_dem_path):
     slopes.ref = 'slope@1'
     slopes.raster = slope_map
     slopes.bandNumber = 1
-    entries.append( slopes )
+    entries.append(slopes)
     # Define DEM
     altitude = QgsRasterCalculatorEntry()
     altitude.ref = 'alti@1'
     altitude.raster = full_dem
     altitude.bandNumber = 1
-    entries.append( altitude )
+    entries.append(altitude)
 
-    altitudeTreshold = BRA_massif["risque"]["evolution"]["altitudeThreshold"] #Vaut 0 si ça ne dépend pas de l'altitude
+    risque = str(max(BRA_massif["risque"]["evolution"]["risqueEvolution"], BRA_massif["risque"]["evolution"]["risqueInitial"]))
+
+    altitudeThreshold = str(BRA_massif["risque"]["evolution"]["altitudeThreshold"]) #Vaut 0 si ça ne dépend pas de l'altitude
 
     if BRA_massif["risque"]["evolution"]["altitudeDependant"]:
-        risque_ini_alt = BRA_massif["risque"]["evolution"]["risqueInitialHighAltitude"]
+        risque_alt = str(max(BRA_massif["risque"]["evolution"]["risqueEvolutionHighAltitude"], BRA_massif["risque"]["evolution"]["risqueInitialHighAltitude"]))
     else:
-        risque_ini_alt = risque_ini
+        risque_alt = risque
 
-    #Définition de la formule, elle vaut True si l'on PEUT skier
+    if MRE:
+        terme_difficulte = 5.
+    else:
+        terme_difficulte = 0.
+
+
+
+    #Définition de la formule, elle vaut 1 si l'on PEUT skier et 0 sinon
     # Cas du risque 1:
-    formula = "(slope@1 <= 40) * (alti@1 < " + altitudeTreshold + ") * (" + risque_ini + " == 1) + " # Cas de l'altitude basse
-    formula+= "(slope@1 <= 40) * (alti@1 >= " + altitudeTreshold + ") * (" + risque_ini_alt + " == 1) + " #Cas de l'altitude haute
+    formula = "(slope@1 <= " + str(40. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 1) + " # Cas de l'altitude basse
+    formula+= "(slope@1 <= " + str(40. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 1) + " #Cas de l'altitude haute
     # Cas du risque 2:
-    formula = "(slope@1 <= 35) * (alti@1 < " + altitudeTreshold + ") * (" + risque_ini + " == 2) + " # Cas de l'altitude basse
-    formula+= "(slope@1 <= 35) * (alti@1 >= " + altitudeTreshold + ") * (" + risque_ini_alt + " == 2) + " #Cas de l'altitude haute
+    formula+= "(slope@1 <= " + str(35. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 2) + " # Cas de l'altitude basse
+    formula+= "(slope@1 <= " + str(35. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 2) + " #Cas de l'altitude haute
     # Cas du risque 3:
-    formula = "(slope@1 <= 30) * (alti@1 < " + altitudeTreshold + ") * (" + risque_ini + " == 3) + " # Cas de l'altitude basse
-    formula+= "(slope@1 <= 30) * (alti@1 >= " + altitudeTreshold + ") * (" + risque_ini_alt + " == 3) + " #Cas de l'altitude haute
+    formula+= "(slope@1 <= " + str(30. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 3) + " # Cas de l'altitude basse
+    formula+= "(slope@1 <= " + str(30. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 3) + " #Cas de l'altitude haute
     # Cas du risque 4:
-    formula = "(slope@1 <= 25) * (alti@1 < " + altitudeTreshold + ") * (" + risque_ini + " == 4) + " # Cas de l'altitude basse
-    formula+= "(slope@1 <= 25) * (alti@1 >= " + altitudeTreshold + ") * (" + risque_ini_alt + " == 4)" #Cas de l'altitude haute
+    formula+= "(slope@1 <= " + str(25. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 4) + " # Cas de l'altitude basse
+    formula+= "(slope@1 <= " + str(25. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 4)" #Cas de l'altitude haute
 
 
     # Process calculation with input extent and resolution
+    output_path = '/home/dpts/Bureau/outputfile.tif'
     calc = QgsRasterCalculator( formula, 
-        '/home/dpts/Bureau/outputfile.tif', 'GTiff', slope_map.extent(), slope_map.width(), slope_map.height(), entries)
+        output_path, 'GTiff', slope_map.extent(), slope_map.width(), slope_map.height(), entries)
     calc.processCalculation()
 
 
-
-    output_path = '/home/dpts/Bureau/outputfile.tif'
     output_map = QgsRasterLayer(output_path, "output_MRD")
     QgsMapLayerRegistry.instance().addMapLayer(output_map)
