@@ -1,13 +1,13 @@
-<?xml version="1.0" encoding="UTF-8"?><project name="Outil de Prévision Effective du Risque Avalanche (OPERA)" company="" webLink="http://" view-date="2017-02-13" view-index="0" gantt-divider-location="353" resource-divider-location="300" version="2.0" locale="fr">
+<?xml version="1.0" encoding="UTF-8"?><project name="Outil de Prévision Effective du Risque Avalanche (OPERA)" company="" webLink="http://" view-date="2016-12-01" view-index="0" gantt-divider-location="353" resource-divider-location="300" version="2.0" locale="fr">
     <description/>
-    <view zooming-state="default:4" id="gantt-chart">
+    <view zooming-state="default:8" id="gantt-chart">
         <field id="tpd3" name="Nom" width="57" order="0"/>
         <field id="tpd4" name="Date de début" width="21" order="1"/>
         <field id="tpd5" name="Date de fin" width="21" order="2"/>
     </view>
     <view id="resource-table">
-        <field id="0" name="Nom" width="56" order="0"/>
-        <field id="1" name="Rôle par défaut" width="43" order="1"/>
+        <field id="0" name="Nom" width="50" order="0"/>
+        <field id="1" name="Rôle par défaut" width="50" order="1"/>
     </view>
     <!-- -->
     <calendars>
@@ -35,17 +35,25 @@
             <taskproperty id="tpd8" name="coordinator" type="default" valuetype="text"/>
             <taskproperty id="tpd9" name="predecessorsr" type="default" valuetype="text"/>
         </taskproperties>
-        <task id="2" name="Prise en main du sujet" color="#8cb6ce" meeting="false" start="2017-02-22" duration="6" complete="0" expand="true"/>
-        <task id="8" name="Gestion projet" color="#8cb6ce" meeting="false" start="2017-02-22" duration="6" complete="0" expand="true"/>
+        <task id="2" name="Prise en main du sujet" color="#0a0af4" shape="0,1,1,1,1,0,0,0,1,0,0,0,1,0,0,0" meeting="false" start="2017-02-22" duration="6" complete="0" expand="true"/>
+        <task id="8" name="Gestion projet" color="#1818e3" shape="0,1,1,1,1,0,0,0,1,0,0,0,1,0,0,0" meeting="false" start="2017-02-22" duration="6" complete="0" expand="true"/>
         <task id="10" name="Préparation des données" meeting="false" start="2017-02-22" duration="11" complete="0" expand="true"/>
         <task id="11" name="Prise en main logiciel" meeting="false" start="2017-03-01" duration="11" complete="0" expand="true"/>
-        <task id="12" name="Programmation MRD/MRE" meeting="false" start="2017-03-08" duration="11" complete="0" expand="true"/>
-        <task id="13" name="Chargement du MNT/cartes de pentes/cartes d'orientation" meeting="false" start="2017-03-08" duration="1" complete="0" expand="true"/>
-        <task id="14" name="Programmation MRP" meeting="false" start="2017-03-15" duration="26" complete="0" expand="true"/>
-        <task id="16" name="Programmation formulaire" meeting="false" start="2017-03-15" duration="26" complete="0" expand="true"/>
-        <task id="18" name="Programmation MRP" meeting="false" start="2017-05-03" duration="6" complete="0" expand="true"/>
-        <task id="19" name="Programmation trace" meeting="false" start="2017-05-03" duration="6" complete="0" expand="true"/>
-        <task id="20" name="Programmation énergie (bonus)" color="#ffcc00" meeting="false" start="2017-05-09" duration="2" complete="0" expand="true"/>
+        <task id="13" name="Chargement du MNT/cartes de pentes/cartes d'orientation" meeting="false" start="2017-03-08" duration="1" complete="0" expand="true">
+            <depend id="34" type="2" difference="0" hardness="Strong"/>
+        </task>
+        <task id="34" name="Programmation" color="#006666" meeting="false" start="2017-03-09" duration="45" complete="0" expand="true">
+            <task id="12" name="Programmation MRD/MRE" meeting="false" start="2017-03-09" duration="11" complete="0" expand="true"/>
+            <task id="14" name="Programmation MRP" meeting="false" start="2017-03-15" duration="41" complete="0" expand="true"/>
+            <task id="16" name="Programmation formulaire" meeting="false" start="2017-03-15" duration="26" complete="0" expand="true"/>
+            <task id="19" name="Programmation trace" meeting="false" start="2017-05-03" duration="6" complete="0" expand="true"/>
+            <task id="20" name="Programmation énergie (bonus)" color="#ffcc00" meeting="false" start="2017-05-09" duration="2" complete="0" expand="true"/>
+        </task>
+        <task id="33" name="Préparation soutenance" color="#111ed6" shape="0,1,1,1,1,0,0,0,1,0,0,0,1,0,0,0" meeting="false" start="2017-05-10" duration="4" complete="0" expand="true"/>
+        <task id="21" name="Skype avec commanditaires" color="#ff0000" shape="0,0,0,0,1,0,0,0,1,1,0,0,1,1,1,0" meeting="false" start="2017-03-22" duration="1" complete="0" expand="true"/>
+        <task id="23" name="Jalon 1 (retour MOA+commanditaire)" color="#fc0d0d" shape="1,1,1,0,1,1,0,0,1,0,0,0,0,0,0,0" meeting="false" start="2017-04-26" duration="1" complete="0" priority="2" expand="true"/>
+        <task id="24" name="Jalon 2" color="#ff0000" shape="1,1,1,0,1,1,0,0,1,0,0,0,0,0,0,0" meeting="false" start="2017-05-10" duration="1" complete="0" priority="2" expand="true"/>
+        <task id="25" name="Jalon 3 (soutenance)" color="#ff0000" shape="1,1,1,0,1,1,0,0,1,0,0,0,0,0,0,0" meeting="false" start="2017-05-17" duration="1" complete="0" priority="2" expand="true"/>
     </tasks>
     <resources>
         <resource id="0" name="Amaury" function="Default:0" contacts="" phone=""/>
