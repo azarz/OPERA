@@ -312,15 +312,35 @@ def MRD(BRA_massif,slope_map_path,full_dem_path):
     altitude.bandNumber = 1
     entries.append( altitude )
 
+    altitudeTreshold = BRA_massif["risque"]["evolution"]["altitudeThreshold"] #Vaut 0 si ça ne dépend pas de l'altitude
+
+    if BRA_massif["risque"]["evolution"]["altitudeDependant"]:
+        risque_ini_alt = BRA_massif["risque"]["evolution"]["risqueInitialHighAltitude"]
+    else:
+        risque_ini_alt = risque_ini
+
+    #Définition de la formule, elle vaut True si l'on PEUT skier
+    # Cas du risque 1:
+    formula = "(slope@1 <= 40) * (alti@1 < " + altitudeTreshold + ") * (" + risque_ini + " == 1) + " # Cas de l'altitude basse
+    formula+= "(slope@1 <= 40) * (alti@1 >= " + altitudeTreshold + ") * (" + risque_ini_alt + " == 1) + " #Cas de l'altitude haute
+    # Cas du risque 2:
+    formula = "(slope@1 <= 35) * (alti@1 < " + altitudeTreshold + ") * (" + risque_ini + " == 2) + " # Cas de l'altitude basse
+    formula+= "(slope@1 <= 35) * (alti@1 >= " + altitudeTreshold + ") * (" + risque_ini_alt + " == 2) + " #Cas de l'altitude haute
+    # Cas du risque 3:
+    formula = "(slope@1 <= 30) * (alti@1 < " + altitudeTreshold + ") * (" + risque_ini + " == 3) + " # Cas de l'altitude basse
+    formula+= "(slope@1 <= 30) * (alti@1 >= " + altitudeTreshold + ") * (" + risque_ini_alt + " == 3) + " #Cas de l'altitude haute
+    # Cas du risque 4:
+    formula = "(slope@1 <= 25) * (alti@1 < " + altitudeTreshold + ") * (" + risque_ini + " == 4) + " # Cas de l'altitude basse
+    formula+= "(slope@1 <= 25) * (alti@1 >= " + altitudeTreshold + ") * (" + risque_ini_alt + " == 4)" #Cas de l'altitude haute
+
+
     # Process calculation with input extent and resolution
-    calc = QgsRasterCalculator( '(boh@1>1000)*(slope@1>40)', 
+    calc = QgsRasterCalculator( formula, 
         '/home/dpts/Bureau/outputfile.tif', 'GTiff', slope_map.extent(), slope_map.width(), slope_map.height(), entries)
     calc.processCalculation()
 
-    
+
 
     output_path = '/home/dpts/Bureau/outputfile.tif'
-    output_map = QgsRasterLayer(output_path, "output")
+    output_map = QgsRasterLayer(output_path, "output_MRD")
     QgsMapLayerRegistry.instance().addMapLayer(output_map)
-
-
