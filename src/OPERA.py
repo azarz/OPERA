@@ -32,6 +32,7 @@ import json
 import processing
 from qgis.core import *
 import numpy as np
+from qgis.analysis import *
 
 
 class Opera:
@@ -231,7 +232,7 @@ class Opera:
                     if tile_mnt.isValid():
                         mnt_list.append(tile_mnt)
                     
-#            QgsMapLayerRegistry.instance().addMapLayers(mnt_list)
+            # QgsMapLayerRegistry.instance().addMapLayers(mnt_list)
                    
 
 
@@ -281,46 +282,45 @@ class Opera:
             res = MRD(bulletin_json[5],slope_path,mnt_path)
             print("hey")
 
+            
 
+            # formula = '(A>2000)*(B>35)'
+            # processing.runalg("gdalogr:rastercalculator",full_dem,1,slope_map,1,None,1,None,1,None,1,None,1,formula,"0",0,"","/home/dpts/Bureau/Lien vers plugins/Opera/data/05/" + massif_travail + "/out.tif")
+            # aspect_map = QgsRasterLayer("/home/dpts/Bureau/Lien vers plugins/Opera/data/05/" + massif_travail + "/out.tif", "" + massif_travail + "_out")
+            # QgsMapLayerRegistry.instance().addMapLayer(aspect_map)
 
 
 
 def MRD(BRA_massif,slope_map_path,full_dem_path):
 
-    # slope = np.array(io.imread(slope_map_path), dtype = float)
-    # dem = np.array(io.imread(full_dem_path), dtype = float)
-    # shape = slope.shape
-    # res = nb.zeros(shape)
-    # risque_ini = BRA_massif["risque"]["evolution"]["risqueInitial"]
-    # for l in range(shape[0]):
-    #     for c in range (shape[1]):
+    slope_map = QgsRasterLayer(slope_path, "slopes")
+    full_dem = QgsRasterLayer(full_dem_path, "full_dem")
 
-    #         risque = risque_ini
-    #         pente = slope[l][c]
+    risque_ini = BRA_massif["risque"]["evolution"]["risqueInitial"]
 
-    #         if dem[l][c] > 9000000: #TODO: thershold
-    #             #risque = risque_evol
-    #             pass
+    entries = []
+    # Define slopes
+    slopes = QgsRasterCalculatorEntry()
+    slopes.ref = 'slope@1'
+    slopes.raster = slope_map
+    slopes.bandNumber = 1
+    entries.append( slopes )
+    # Define DEM
+    altitude = QgsRasterCalculatorEntry()
+    altitude.ref = 'alti@1'
+    altitude.raster = full_dem
+    altitude.bandNumber = 1
+    entries.append( altitude )
+
+    # Process calculation with input extent and resolution
+    calc = QgsRasterCalculator( '(boh@1>1000)*(slope@1>40)', 
+        '/home/dpts/Bureau/outputfile.tif', 'GTiff', slope_map.extent(), slope_map.width(), slope_map.height(), entries)
+    calc.processCalculation()
+
+    
+
+    output_path = '/home/dpts/Bureau/outputfile.tif'
+    output_map = QgsRasterLayer(output_path, "output")
+    QgsMapLayerRegistry.instance().addMapLayer(output_map)
 
 
-    #         if risque == 1:
-    #             if pente > 40:
-    #                 res[l][c] = 1
-
-    #         elif risque == 2:
-    #             if pente > 35:
-    #                 res[l][c] = 1
-
-    #         elif risque == 3:
-    #             if pente > 30:
-    #                 res[l][c] = 1
-
-    #         elif risque == 4:
-    #             if pente > 25:
-    #                 res[l][c] = 1
-
-    #         else:
-    #             res[l][c] = 1
-
-    # io.imshow(res)
-    # return res
