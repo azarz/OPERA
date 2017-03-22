@@ -1,2 +1,4 @@
-#OPERA
-Outil de Prévision Effective du Risque Avalanche
+# OPERA
+
+Outil de PrÃ©vision Effective du Risque Avalanche
+![doc/logo.jpg](doc/logo.jpg "Logo du projet")

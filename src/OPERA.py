@@ -209,6 +209,10 @@ class Opera:
             massif_travail = self.dlg.massifs.currentText()
             massif_travail = massif_travail.lower()
 
+            #Recupération de la methode
+            niv_methode = self.dlg.radio_niveau.checkedButton().objectName()
+            
+
             # pour reprojeter en Lambert 93 
             # processing.runalg("qgis:reprojectlayer", area, "EPSG:2154", "massif")
 
@@ -298,8 +302,16 @@ class Opera:
                     bulletin_massif = mass
 
 
-            # Exécution de la méthode MRD ou MRE
-            MRDMRE(bulletin_massif,slope_path,mnt_path)
+            #Lancement de m'algorithme de Munter correspondant au niveau choisi
+            if niv_methode == "radio_MRD":
+                print('MRD')
+                MRDMRE(bulletin_massif,slope_path,mnt_path)
+            elif niv_methode == "radio_MRE":
+                print('MRE')
+                MRDMRE(bulletin_massif,slope_path,mnt_path, True)
+            else:
+                pass
+
 
             print("hey")
 
