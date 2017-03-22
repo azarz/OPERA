@@ -20,8 +20,8 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
-from PyQt4.QtGui import QAction, QIcon
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 # Initialize Qt resources from file resources.py
 import resources
 # Import the code for the dialog
@@ -218,7 +218,6 @@ class Opera:
             xmax = area.extent().xMaximum()/1000
             ymin = area.extent().yMinimum()/1000
             ymax = area.extent().yMaximum()/1000
-                        
 
             # 1- MNT fusionné --------------------------------------------------------------------------
             # On cherche le MNT à son endroit normal
@@ -388,6 +387,17 @@ def MRDMRE(BRA_massif, slope_map_path, full_dem_path, MRE=False):
 
     # On importe la carte obtenue en tant que couche QGIS que l'on ajoute à l'interface
     output_map = QgsRasterLayer(output_path, "output_MRD_or_MRE")
+
+    fcn = QgsColorRampShader()
+    fcn.setColorRampType(QgsColorRampShader.INTERPOLATED)
+    lst = [ QgsColorRampShader.ColorRampItem(0, QColor(255,0,0,128)), QgsColorRampShader.ColorRampItem(1, QColor(255,255,255,0)) ]
+    fcn.setColorRampItemList(lst)
+    shader = QgsRasterShader()
+    shader.setRasterShaderFunction(fcn)
+
+    renderer = QgsSingleBandPseudoColorRenderer(output_map.dataProvider(), 1, shader)
+    output_map.setRenderer(renderer)
+
     QgsMapLayerRegistry.instance().addMapLayer(output_map)
 
     return(risque, risque_alt)
