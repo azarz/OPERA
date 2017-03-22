@@ -367,10 +367,13 @@ def MRDMRE(BRA_massif, slope_map_path, full_dem_path, MRE=False):
         risque_alt = risque
 
     # Ajout du terme de difficulté : la MRE permet d'accéder à des pentes supérieures de 5° à la MRD   
+    method_type = ""
     if MRE:
         terme_difficulte = 5.
+        method_type = "mre"
     else:
         terme_difficulte = 0.
+        method_type = "mrd"
 
 
 
@@ -390,7 +393,7 @@ def MRDMRE(BRA_massif, slope_map_path, full_dem_path, MRE=False):
 
 
     # Chemin de sortie de la couche
-    output_path = PATH_TO_OPERA_PLUGIN + '/tmp/mrd_mre.tif'
+    output_path = PATH_TO_OPERA_PLUGIN + '/tmp/' + method_type + '.tif'
     # Définition de l'instance de RasterCalculator à partir de la formule définie au dessus, et des dimensions de la carte des pentes
     calc = QgsRasterCalculator( formula, 
         output_path, 'GTiff', slope_map.extent(), slope_map.width(), slope_map.height(), entries)
@@ -398,7 +401,9 @@ def MRDMRE(BRA_massif, slope_map_path, full_dem_path, MRE=False):
     calc.processCalculation()
 
     # On importe la carte obtenue en tant que couche QGIS que l'on ajoute à l'interface
-    output_map = QgsRasterLayer(output_path, "output_MRD_or_MRE")
+    layer_name = "output_" + method_type
+
+    output_map = QgsRasterLayer(output_path, layer_name)
 
     fcn = QgsColorRampShader()
     fcn.setColorRampType(QgsColorRampShader.INTERPOLATED)

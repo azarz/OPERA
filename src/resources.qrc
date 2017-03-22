@@ -1,6 +1,5 @@
 <RCC>
     <qresource prefix="/plugins/Opera">
         <file>icon.png</file>
-        <file>doc/logo.jpg</file>
     </qresource>
 </RCC>
