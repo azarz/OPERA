@@ -27,20 +27,12 @@ import resources
 # Import the code for the dialog
 from OPERA_dialog import OperaDialog
 import os.path
-
-# Import des bibliopthèques pour lire le BRA en ligne
 import urllib
 import json
-
-# Bibliothèques pour les traitements QGIS
 import processing
 from qgis.core import *
 import numpy as np
 from qgis.analysis import *
-
-
-# Chemin vers le plugin OPERA, par défaut ~/.qgis2/python/plugins/Opera
-PATH_TO_OPERA_PLUGIN = "/home/dpts/.qgis2/python/plugins/Opera"
 
 
 class Opera:
@@ -200,70 +192,65 @@ class Opera:
         self.dlg.show()
         # Run the dialog event loop
         result = self.dlg.exec_()
-
-
-        # En appuyant sur la touche OK :
+        # See if OK was pressed
         if result:
-
-            #Recupération du massif sur lequel on travaille
+            #Recupération du massif sur lequel on travail
             massif_travail = self.dlg.massifs.currentText()
             massif_travail = massif_travail.lower()
+
 
             # pour reprojeter en Lambert 93 
             # processing.runalg("qgis:reprojectlayer", area, "EPSG:2154", "massif")
 
             # Importation du shp qui décrit la zone et des ses coordonnées maximales et minimales
-            area = QgsVectorLayer(PATH_TO_OPERA_PLUGIN + "/data/05/" + massif_travail + "/shp/" + massif_travail + ".shp", massif_travail, "ogr")
+            area = QgsVectorLayer("/home/dpts/Bureau/Lien vers plugins/Opera/data/05/" + massif_travail + "/shp/" + massif_travail + ".shp", massif_travail, "ogr")
             xmin = area.extent().xMinimum()/1000
             xmax = area.extent().xMaximum()/1000
             ymin = area.extent().yMinimum()/1000
             ymax = area.extent().yMaximum()/1000
-                        
+            
 
-            # 1- MNT fusionné --------------------------------------------------------------------------
-            # On cherche le MNT à son endroit normal
-            mnt_path = PATH_TO_OPERA_PLUGIN + "/data/05/" + massif_travail + "/mnt.tif"
+            # On va chercher toutes les tuiles du MNT correspondant aux bornes du shp
+            mnt_list = []
+
+            for x in range (int((xmin//5)*5),int(np.ceil(xmax/5)*5),5):
+                for y in range (int((ymin//5)*5+5),int(np.ceil(ymax/5)*5+5),5):
+
+                    x_str = str(x)
+                    y_str = str(y)
+
+                    if x < 1000:
+                        x_str = "0" + str(x)
+                    if y < 1000:
+                        y_str = "0" + str(y)
+
+                    path = "/home/dpts/Bureau/Lien vers plugins/Opera/data/05/mnt/"
+                    path += "RGEALTI_FXX_" + x_str + "_" + y_str + "_MNT_LAMB93_IGN69.tif"
+                    tile_mnt = QgsRasterLayer(path, "" + massif_travail + "_" + x_str + "_" + y_str)
+
+                    # Si la couche est valide, on l'ajoute à la listte de couches
+                    if tile_mnt.isValid():
+                        mnt_list.append(tile_mnt)
+                    
+            # QgsMapLayerRegistry.instance().addMapLayers(mnt_list)
+                   
+
+
+            #Calcul du MNT de la zone entière
+            mnt_path = "/home/dpts/Bureau/Lien vers plugins/Opera/data/05/" + massif_travail + "/mnt.tif"
             full_dem = QgsRasterLayer(mnt_path, "" + massif_travail + "_full_dem")
 
-            # Si le MNT couvrant la zone n'existe pas, on le crée
             if not full_dem.isValid():
-
-            	# On va chercher toutes les tuiles du MNT correspondant aux bornes du shp
-                mnt_list = []
-
-                for x in range (int((xmin//5)*5),int(np.ceil(xmax/5)*5),5):
-                    for y in range (int((ymin//5)*5+5),int(np.ceil(ymax/5)*5+5),5):
-
-                        x_str = str(x)
-                        y_str = str(y)
-
-                        # On rjoute le 0 éventuel devant la centaine pour correspondre à la nomenclature IGN
-                        if x < 1000:
-                            x_str = "0" + str(x)
-                        if y < 1000:
-                            y_str = "0" + str(y)
-
-                        path = PATH_TO_OPERA_PLUGIN + "/data/05/mnt/"
-                        path += "RGEALTI_FXX_" + x_str + "_" + y_str + "_MNT_LAMB93_IGN69.tif"
-                        tile_mnt = QgsRasterLayer(path, "" + massif_travail + "_" + x_str + "_" + y_str)
-
-                        # Si la couche est valide (si le fichier existe), on l'ajoute à la listte de couches
-                        if tile_mnt.isValid():
-                            mnt_list.append(tile_mnt)
-
-
                 processing.runalg("gdalogr:merge",mnt_list,False,False,5,mnt_path)
                 full_dem = QgsRasterLayer(mnt_path, "" + massif_travail + "_full_dem")
                 
             # QgsMapLayerRegistry.instance().addMapLayer(full_dem)
             
 
-            # 2- Carte des pentes --------------------------------------------------------------------------
-            # On cherche la carte des pentes à son endroit normal
-            slope_path = PATH_TO_OPERA_PLUGIN + "/data/05/" + massif_travail + "/pente.tif"
+            #Calcul de la carte des pentes
+            slope_path = "/home/dpts/Bureau/Lien vers plugins/Opera/data/05/" + massif_travail + "/pente.tif"
             slope_map = QgsRasterLayer(slope_path, "" + massif_travail + "_slopes")
 
-			#Si elle n'existe pas, on la crée
             if not slope_map.isValid():
                 processing.runalg("gdalogr:slope",full_dem,1,False,False,False,1.0,slope_path)
                 slope_map = QgsRasterLayer(slope_path, "" + massif_travail + "_slopes")
@@ -272,12 +259,10 @@ class Opera:
             
 
 
-            # 3- Carte des orientations --------------------------------------------------------------------------
-            # On cherche la carte des pentes à son endroit normal
-            aspect_path = PATH_TO_OPERA_PLUGIN + "/data/05/" + massif_travail + "/orientation.tif"
+            #Calcul de la carte des orientations
+            aspect_path = "/home/dpts/Bureau/Lien vers plugins/Opera/data/05/" + massif_travail + "/orientation.tif"
             aspect_map = QgsRasterLayer(aspect_path, "" + massif_travail + "_aspect")
 
-			#Si elle n'existe pas, on la crée
             if not aspect_map.isValid():
                 processing.runalg("gdalogr:aspect",full_dem,1,False,False,False,False,aspect_path)
                 aspect_map = QgsRasterLayer(aspect_path, "" + massif_travail + "_aspect")
@@ -286,108 +271,76 @@ class Opera:
             
 
 
-            # 4- Récuperation des données du BRA Météo France -----------------------------------------------------
-            # URL correspondant au JSON décrivant le BRA, les 2 derniers chiffres correspondant au numéro de département
+            #Récuperation des données météo france du BRA
             url_meteo_fr = "http://www.meteofrance.com/mf3-rpc-portlet/rest/enneigement/bulletins/cartouches/AVDEPT05"
-            # On convertit la réponse en un dictionnaire Python
             response = urllib.urlopen(url_meteo_fr)
             bulletin_json = json.loads(response.read())
-
-            # On recherche les prévisions par rapport au massif renseigné dans l'interface
             for mass in bulletin_json:
                 if mass["massif"]["slug"] == massif_travail:
-                    bulletin_massif = mass
+                    print(mass["risque"]["pente"]["ne"])
 
-
-            # Exécution de la méthode MRD ou MRE
-            MRDMRE(bulletin_massif,slope_path,mnt_path)
-
+            res = MRD(bulletin_json[5],slope_path,mnt_path)
             print("hey")
 
+            
+
+            # formula = '(A>2000)*(B>35)'
+            # processing.runalg("gdalogr:rastercalculator",full_dem,1,slope_map,1,None,1,None,1,None,1,None,1,formula,"0",0,"","/home/dpts/Bureau/Lien vers plugins/Opera/data/05/" + massif_travail + "/out.tif")
+            # aspect_map = QgsRasterLayer("/home/dpts/Bureau/Lien vers plugins/Opera/data/05/" + massif_travail + "/out.tif", "" + massif_travail + "_out")
+            # QgsMapLayerRegistry.instance().addMapLayer(aspect_map)
 
 
-def MRDMRE(BRA_massif, slope_map_path, full_dem_path, MRE=False):
-    """
-    Application de la méthode de réduction pour débutants ou élémentaire. Ajoute à la carte QGIS une carte binaire des régions
-    dangereuses (0) ou non (1)
 
-    :param BRA_massif: dictionnaire issu de BRA correspondant au massif de travail
-    :type BRA_massif: dict
+def MRD(BRA_massif,slope_map_path,full_dem_path):
 
-    :param slope_map_path: chaîne de caractères correspondant au chemin de la carte des pentes
-    :type slope_map_path: str
-
-    :param full_dem_path: chaîne de caractères correspondant au chemin du MNT du massif
-    :type full_dem_path: str
-
-    :param MRE: booléen qui est Vrai si la méthode utilisée est la MRE, et Faux si c'est la MRD
-    :param MRE: bool
-    """
-
-    # On importe la carte des pentes et le MNT
-    slope_map = QgsRasterLayer(slope_map_path, "slopes")
+    slope_map = QgsRasterLayer(slope_path, "slopes")
     full_dem = QgsRasterLayer(full_dem_path, "full_dem")
 
-    # List des entrées de la calculatrice raster
+    risque_ini = BRA_massif["risque"]["evolution"]["risqueInitial"]
+
     entries = []
-    # Définition des pentes
+    # Define slopes
     slopes = QgsRasterCalculatorEntry()
     slopes.ref = 'slope@1'
     slopes.raster = slope_map
     slopes.bandNumber = 1
-    entries.append(slopes)
-    # Définition des altitudes
+    entries.append( slopes )
+    # Define DEM
     altitude = QgsRasterCalculatorEntry()
     altitude.ref = 'alti@1'
     altitude.raster = full_dem
     altitude.bandNumber = 1
-    entries.append(altitude)
+    entries.append( altitude )
 
-    # Extraction du risque depuis le BRA : maximum entre le risque initial et le risque évolution (qui vaut 0 s'il n'y a pas d'évolution)
-    risque = str(max(BRA_massif["risque"]["evolution"]["risqueEvolution"], BRA_massif["risque"]["evolution"]["risqueInitial"]))
+    altitudeTreshold = BRA_massif["risque"]["evolution"]["altitudeThreshold"] #Vaut 0 si ça ne dépend pas de l'altitude
 
-    # Extraction du seuil d'altitude. Vaut 0 si ça ne dépend pas de l'altitude
-    altitudeThreshold = str(BRA_massif["risque"]["evolution"]["altitudeThreshold"]) 
-
-    # Extraction du risque en altitude. S'il n'y a qu'un seul niveau de risque en fonction de l'altitude, on prend donc le même risque.
     if BRA_massif["risque"]["evolution"]["altitudeDependant"]:
-        risque_alt = str(max(BRA_massif["risque"]["evolution"]["risqueEvolutionHighAltitude"], BRA_massif["risque"]["evolution"]["risqueInitialHighAltitude"]))
+        risque_ini_alt = BRA_massif["risque"]["evolution"]["risqueInitialHighAltitude"]
     else:
-        risque_alt = risque
+        risque_ini_alt = risque_ini
 
-    # Ajout du terme de difficulté : la MRE permet d'accéder à des pentes supérieures de 5° à la MRD   
-    if MRE:
-        terme_difficulte = 5.
-    else:
-        terme_difficulte = 0.
-
-
-
-    #Définition de la formule, elle vaut 1 si l'on PEUT skier et 0 sinon
+    #Définition de la formule, elle vaut True si l'on PEUT skier
     # Cas du risque 1:
-    formula = "(slope@1 <= " + str(40. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 1) + " # Cas de l'altitude basse
-    formula+= "(slope@1 <= " + str(40. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 1) + " #Cas de l'altitude haute
+    formula = "(slope@1 <= 40) * (alti@1 < " + altitudeTreshold + ") * (" + risque_ini + " == 1) + " # Cas de l'altitude basse
+    formula+= "(slope@1 <= 40) * (alti@1 >= " + altitudeTreshold + ") * (" + risque_ini_alt + " == 1) + " #Cas de l'altitude haute
     # Cas du risque 2:
-    formula+= "(slope@1 <= " + str(35. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 2) + " # Cas de l'altitude basse
-    formula+= "(slope@1 <= " + str(35. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 2) + " #Cas de l'altitude haute
+    formula = "(slope@1 <= 35) * (alti@1 < " + altitudeTreshold + ") * (" + risque_ini + " == 2) + " # Cas de l'altitude basse
+    formula+= "(slope@1 <= 35) * (alti@1 >= " + altitudeTreshold + ") * (" + risque_ini_alt + " == 2) + " #Cas de l'altitude haute
     # Cas du risque 3:
-    formula+= "(slope@1 <= " + str(30. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 3) + " # Cas de l'altitude basse
-    formula+= "(slope@1 <= " + str(30. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 3) + " #Cas de l'altitude haute
+    formula = "(slope@1 <= 30) * (alti@1 < " + altitudeTreshold + ") * (" + risque_ini + " == 3) + " # Cas de l'altitude basse
+    formula+= "(slope@1 <= 30) * (alti@1 >= " + altitudeTreshold + ") * (" + risque_ini_alt + " == 3) + " #Cas de l'altitude haute
     # Cas du risque 4:
-    formula+= "(slope@1 <= " + str(25. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 4) + " # Cas de l'altitude basse
-    formula+= "(slope@1 <= " + str(25. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 4)" #Cas de l'altitude haute
+    formula = "(slope@1 <= 25) * (alti@1 < " + altitudeTreshold + ") * (" + risque_ini + " == 4) + " # Cas de l'altitude basse
+    formula+= "(slope@1 <= 25) * (alti@1 >= " + altitudeTreshold + ") * (" + risque_ini_alt + " == 4)" #Cas de l'altitude haute
 
 
-    # Chemin de sortie de la couche
-    output_path = PATH_TO_OPERA_PLUGIN + '/tmp/mrd_mre.tif'
-    # Définition de l'instance de RasterCalculator à partir de la formule définie au dessus, et des dimensions de la carte des pentes
+    # Process calculation with input extent and resolution
     calc = QgsRasterCalculator( formula, 
-        output_path, 'GTiff', slope_map.extent(), slope_map.width(), slope_map.height(), entries)
-    # On effectue le calcul
+        '/home/dpts/Bureau/outputfile.tif', 'GTiff', slope_map.extent(), slope_map.width(), slope_map.height(), entries)
     calc.processCalculation()
 
-    # On importe la carte obtenue en tant que couche QGIS que l'on ajoute à l'interface
-    output_map = QgsRasterLayer(output_path, "output_MRD_or_MRE")
-    QgsMapLayerRegistry.instance().addMapLayer(output_map)
 
-    return(risque, risque_alt)
+
+    output_path = '/home/dpts/Bureau/outputfile.tif'
+    output_map = QgsRasterLayer(output_path, "output_MRD")
+    QgsMapLayerRegistry.instance().addMapLayer(output_map)
