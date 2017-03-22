@@ -16,8 +16,8 @@
   <widget class="QDialogButtonBox" name="button_box">
    <property name="geometry">
     <rect>
-     <x>30</x>
-     <y>240</y>
+     <x>-10</x>
+     <y>350</y>
      <width>341</width>
      <height>32</height>
     </rect>
@@ -32,8 +32,8 @@
   <widget class="QRadioButton" name="radio_MRE">
    <property name="geometry">
     <rect>
-     <x>160</x>
-     <y>100</y>
+     <x>380</x>
+     <y>180</y>
      <width>151</width>
      <height>22</height>
     </rect>
@@ -48,8 +48,8 @@
   <widget class="QRadioButton" name="radio_MRD">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>100</y>
+     <x>380</x>
+     <y>160</y>
      <width>151</width>
      <height>22</height>
     </rect>
@@ -64,8 +64,8 @@
   <widget class="QRadioButton" name="radio_MRP">
    <property name="geometry">
     <rect>
-     <x>320</x>
-     <y>100</y>
+     <x>380</x>
+     <y>200</y>
      <width>116</width>
      <height>22</height>
     </rect>
@@ -80,8 +80,8 @@
   <widget class="QCheckBox" name="checkBox">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>180</y>
+     <x>170</x>
+     <y>290</y>
      <width>271</width>
      <height>22</height>
     </rect>
@@ -93,8 +93,8 @@
   <widget class="QComboBox" name="massifs">
    <property name="geometry">
     <rect>
-     <x>170</x>
-     <y>20</y>
+     <x>380</x>
+     <y>50</y>
      <width>78</width>
      <height>27</height>
     </rect>
@@ -104,7 +104,86 @@
      <string>Thabor</string>
     </property>
    </item>
+   <item>
+    <property name="text">
+     <string>Pelvoux</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Champsaur</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Devoluy</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Queyras</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Embrunais-Parapaillon</string>
+    </property>
+   </item>
   </widget>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>10</y>
+     <width>271</width>
+     <height>191</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="pixmap">
+    <pixmap>../doc/logo.jpg</pixmap>
+   </property>
+   <property name="scaledContents">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>330</x>
+     <y>130</y>
+     <width>121</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Niveau de réduction :</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_3">
+   <property name="geometry">
+    <rect>
+     <x>330</x>
+     <y>30</y>
+     <width>47</width>
+     <height>13</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Massif :</string>
+   </property>
+  </widget>
+  <zorder>label</zorder>
+  <zorder>button_box</zorder>
+  <zorder>radio_MRE</zorder>
+  <zorder>radio_MRD</zorder>
+  <zorder>radio_MRP</zorder>
+  <zorder>checkBox</zorder>
+  <zorder>massifs</zorder>
+  <zorder>label_2</zorder>
+  <zorder>label_3</zorder>
  </widget>
  <resources/>
  <connections>
