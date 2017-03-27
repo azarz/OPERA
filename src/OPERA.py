@@ -42,6 +42,9 @@ from qgis.analysis import *
 # Chemin vers le plugin OPERA, par défaut ~/.qgis2/python/plugins/Opera
 PATH_TO_OPERA_PLUGIN = "/home/dpts/.qgis2/python/plugins/Opera"
 
+# Dictionnaire associant une couleur à un risque
+RISK_COLOR_DICT = {1: QColor(202,219,68,128), 2: QColor(255,241,0,128), 3: QColor(247,148,29,128), 4: QColor(238,28,27,128), 5: QColor(190,30,46,128)}
+
 
 class Opera:
     """QGIS Plugin Implementation."""
@@ -377,19 +380,19 @@ def MRDMRE(BRA_massif, slope_map_path, full_dem_path, MRE=False):
 
 
 
-    #Définition de la formule, elle vaut 1 si l'on PEUT skier et 0 sinon
+    #Définition de la formule, elle vaut 0 si l'on peut skier, 1 si l'on ne peut pas skier en altitude basse et 2 si l'on ne peut pas skier en altitude haute
     # Cas du risque 1:
-    formula = "(slope@1 <= " + str(40. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 1) + " # Cas de l'altitude basse
-    formula+= "(slope@1 <= " + str(40. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 1) + " #Cas de l'altitude haute
+    formula = "(slope@1 >= " + str(40. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 1) + " # Cas de l'altitude basse
+    formula+= "2 * (slope@1 >= " + str(40. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 1) + " #Cas de l'altitude haute
     # Cas du risque 2:
-    formula+= "(slope@1 <= " + str(35. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 2) + " # Cas de l'altitude basse
-    formula+= "(slope@1 <= " + str(35. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 2) + " #Cas de l'altitude haute
+    formula+= "(slope@1 >= " + str(35. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 2) + " # Cas de l'altitude basse
+    formula+= "2 * (slope@1 >= " + str(35. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 2) + " #Cas de l'altitude haute
     # Cas du risque 3:
-    formula+= "(slope@1 <= " + str(30. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 3) + " # Cas de l'altitude basse
-    formula+= "(slope@1 <= " + str(30. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 3) + " #Cas de l'altitude haute
+    formula+= "(slope@1 >= " + str(30. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 3) + " # Cas de l'altitude basse
+    formula+= "2 * (slope@1 >= " + str(30. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 3) + " #Cas de l'altitude haute
     # Cas du risque 4:
-    formula+= "(slope@1 <= " + str(25. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 4) + " # Cas de l'altitude basse
-    formula+= "(slope@1 <= " + str(25. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 4)" #Cas de l'altitude haute
+    formula+= "(slope@1 >= " + str(25. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 4) + " # Cas de l'altitude basse
+    formula+= "2 * (slope@1 >= " + str(25. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 4)" #Cas de l'altitude haute
 
 
     # Chemin de sortie de la couche
@@ -407,7 +410,7 @@ def MRDMRE(BRA_massif, slope_map_path, full_dem_path, MRE=False):
 
     fcn = QgsColorRampShader()
     fcn.setColorRampType(QgsColorRampShader.INTERPOLATED)
-    lst = [ QgsColorRampShader.ColorRampItem(0, QColor(255,0,0,128)), QgsColorRampShader.ColorRampItem(1, QColor(255,255,255,0)) ]
+    lst = [ QgsColorRampShader.ColorRampItem(0, QColor(255,255,255,0)), QgsColorRampShader.ColorRampItem(1, RISK_COLOR_DICT[risque]), QgsColorRampShader.ColorRampItem(2, RISK_COLOR_DICT[risque_alt]) ]
     fcn.setColorRampItemList(lst)
     shader = QgsRasterShader()
     shader.setRasterShaderFunction(fcn)
