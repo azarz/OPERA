@@ -43,7 +43,7 @@ from qgis.analysis import *
 PATH_TO_OPERA_PLUGIN = "/home/dpts/.qgis2/python/plugins/Opera"
 
 # Dictionnaire associant une couleur à un risque
-RISK_COLOR_DICT = {1: QColor(202,219,68,128), 2: QColor(255,241,0,128), 3: QColor(247,148,29,128), 4: QColor(238,28,27,128), 5: QColor(190,30,46,128)}
+RISK_COLOR_DICT = {'1': QColor(202,219,68,128), '2': QColor(255,241,0,128), '3': QColor(247,148,29,128), '4': QColor(238,28,27,128), '5': QColor(190,30,46,128)}
 
 
 class Opera:
@@ -226,6 +226,32 @@ class Opera:
             ymin = area.extent().yMinimum()/1000
             ymax = area.extent().yMaximum()/1000
 
+            root = QgsProject.instance().layerTreeRoot()
+            gr_sc25 = root.addGroup("SC25_"+massif_travail)
+
+            # Chargement des scan25 correspondant à la zone
+            for x in range (int((xmin//10)*10),int(np.ceil(xmax/10)*10),10):
+                    for y in range (int((ymin//10)*10+10),int(np.ceil(ymax/10)*10+10),10):
+
+                        x_str = str(x)
+                        y_str = str(y)
+
+                        # On rjoute le 0 éventuel devant la centaine pour correspondre à la nomenclature IGN
+                        if x < 1000:
+                            x_str = "0" + str(x)
+                        if y < 1000:
+                            y_str = "0" + str(y)
+
+                        path = PATH_TO_OPERA_PLUGIN + "/data/05/sc25/"
+                        path += "SC25_TOUR_" + x_str + "_" + y_str + "_L93_E100.tif"
+                        sc25 = QgsRasterLayer(path, "" + massif_travail + "_" + x_str + "_" + y_str)
+
+                        # Si la couche est valide (si le fichier existe), on l'ajoute à la listte de couches
+                        if sc25.isValid():
+                            QgsMapLayerRegistry.instance().addMapLayer(sc25,False)
+                            gr_sc25.insertLayer(1,sc25)
+
+
             # 1- MNT fusionné --------------------------------------------------------------------------
             # On cherche le MNT à son endroit normal
             mnt_path = PATH_TO_OPERA_PLUGIN + "/data/05/" + massif_travail + "/mnt.tif"
@@ -301,6 +327,8 @@ class Opera:
 
             # On recherche les prévisions par rapport au massif renseigné dans l'interface
             for mass in bulletin_json:
+                print(mass["massif"]["slug"])
+                print(massif_travail)
                 if mass["massif"]["slug"] == massif_travail:
                     bulletin_massif = mass
 
@@ -308,10 +336,10 @@ class Opera:
             #Lancement de m'algorithme de Munter correspondant au niveau choisi
             if niv_methode == "radio_MRD":
                 print('MRD')
-                MRDMRE(bulletin_massif,slope_path,mnt_path)
+                MRDMRE(bulletin_massif,slope_path,mnt_path, massif_travail)
             elif niv_methode == "radio_MRE":
                 print('MRE')
-                MRDMRE(bulletin_massif,slope_path,mnt_path, True)
+                MRDMRE(bulletin_massif,slope_path,mnt_path, massif_travail, True)
             else:
                 pass
 
@@ -320,7 +348,7 @@ class Opera:
 
 
 
-def MRDMRE(BRA_massif, slope_map_path, full_dem_path, MRE=False):
+def MRDMRE(BRA_massif, slope_map_path, full_dem_path, massif_travail, MRE=False):
     """
     Application de la méthode de réduction pour débutants ou élémentaire. Ajoute à la carte QGIS une carte binaire des régions
     dangereuses (0) ou non (1)
@@ -396,7 +424,7 @@ def MRDMRE(BRA_massif, slope_map_path, full_dem_path, MRE=False):
 
 
     # Chemin de sortie de la couche
-    output_path = PATH_TO_OPERA_PLUGIN + '/tmp/' + method_type + '.tif'
+    output_path = PATH_TO_OPERA_PLUGIN + '/tmp/' + massif_travail + '/' + method_type + '.tif'
     # Définition de l'instance de RasterCalculator à partir de la formule définie au dessus, et des dimensions de la carte des pentes
     calc = QgsRasterCalculator( formula, 
         output_path, 'GTiff', slope_map.extent(), slope_map.width(), slope_map.height(), entries)
@@ -420,4 +448,38 @@ def MRDMRE(BRA_massif, slope_map_path, full_dem_path, MRE=False):
 
     QgsMapLayerRegistry.instance().addMapLayer(output_map)
 
-    return(risque, risque_alt)
+    return None
+
+
+def MRP(BRA_massif,slope_map_path, full_dem_path, aspect_map_path, massif_travail):
+    # On importe la carte des pentes et le MNT
+    slope_map = QgsRasterLayer(slope_map_path, "slopes")
+    full_dem = QgsRasterLayer(full_dem_path, "full_dem")
+    aspect_map = QgsRasterLayer(aspect_map_path, "aspects")
+
+    # List des entrées de la calculatrice raster
+    entries = []
+    # Définition des pentes
+    slopes = QgsRasterCalculatorEntry()
+    slopes.ref = 'slope@1'
+    slopes.raster = slope_map
+    slopes.bandNumber = 1
+    entries.append(slopes)
+    # Définition des altitudes
+    altitude = QgsRasterCalculatorEntry()
+    altitude.ref = 'alti@1'
+    altitude.raster = full_dem
+    altitude.bandNumber = 1
+    entries.append(altitude)
+
+    # Extraction du risque depuis le BRA : maximum entre le risque initial et le risque évolution (qui vaut 0 s'il n'y a pas d'évolution)
+    risque = str(max(BRA_massif["risque"]["evolution"]["risqueEvolution"], BRA_massif["risque"]["evolution"]["risqueInitial"]))
+
+    # Extraction du seuil d'altitude. Vaut 0 si ça ne dépend pas de l'altitude
+    altitudeThreshold = str(BRA_massif["risque"]["evolution"]["altitudeThreshold"]) 
+
+    # Extraction du risque en altitude. S'il n'y a qu'un seul niveau de risque en fonction de l'altitude, on prend donc le même risque.
+    if BRA_massif["risque"]["evolution"]["altitudeDependant"]:
+        risque_alt = str(max(BRA_massif["risque"]["evolution"]["risqueEvolutionHighAltitude"], BRA_massif["risque"]["evolution"]["risqueInitialHighAltitude"]))
+    else:
+        risque_alt = risque

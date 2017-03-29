@@ -60,7 +60,7 @@ class Ui_OperaDialogBase(object):
         self.label = QtGui.QLabel(OperaDialogBase)
         self.label.setGeometry(QtCore.QRect(10, 10, 271, 191))
         self.label.setText(_fromUtf8(""))
-        self.label.setPixmap(QtGui.QPixmap(_fromUtf8("/home/dpts/.qgis2/python/plugins/Opera/doc/logo.jpg")))
+        self.label.setPixmap(QtGui.QPixmap(_fromUtf8("../../../.qgis2/python/plugins/Opera/doc/logo.jpg")))
         self.label.setScaledContents(True)
         self.label.setObjectName(_fromUtf8("label"))
         self.label_2 = QtGui.QLabel(OperaDialogBase)
@@ -95,7 +95,7 @@ class Ui_OperaDialogBase(object):
         self.massifs.setItemText(2, _translate("OperaDialogBase", "Champsaur", None))
         self.massifs.setItemText(3, _translate("OperaDialogBase", "Devoluy", None))
         self.massifs.setItemText(4, _translate("OperaDialogBase", "Queyras", None))
-        self.massifs.setItemText(5, _translate("OperaDialogBase", "Embrunais-Parapaillon", None))
+        self.massifs.setItemText(5, _translate("OperaDialogBase", "Embrunnais-Parpaillon", None))
         self.label_2.setText(_translate("OperaDialogBase", "Niveau de réduction :", None))
         self.label_3.setText(_translate("OperaDialogBase", "Massif :", None))
 
