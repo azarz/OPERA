@@ -329,6 +329,12 @@
    <property name="text">
     <string>Si évolution (flèche) prendre la valeur la plus haute</string>
    </property>
+   <property name="textFormat">
+    <enum>Qt::AutoText</enum>
+   </property>
+   <property name="wordWrap">
+    <bool>true</bool>
+   </property>
   </widget>
   <widget class="QComboBox" name="riskHigh">
    <property name="geometry">

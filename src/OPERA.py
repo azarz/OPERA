@@ -45,7 +45,15 @@ PATH_TO_OPERA_PLUGIN = "/home/dpts/.qgis2/python/plugins/Opera"
 # Dictionnaire associant une couleur à un risque
 RISK_COLOR_DICT = {'1': QColor(202,219,68,128), '2': QColor(255,241,0,128), '3': QColor(247,148,29,128), '4': QColor(238,28,27,128), '5': QColor(190,30,46,128)}
 
-
+#Dictionnaire associant à une orientation la tranche en degré correspondant
+ORIENTATION_DICT = {"ne" : "ori@1 >= 22.5 AND ori@ <67.5",
+                    "e" : "ori@1 >= 67.5 AND ori@ <112.5",
+                    "se" : "ori@1 >= 112.5 AND ori@ <157.5",
+                    "s" : "ori@1 >= 157.5 AND ori@ <202.5",
+                    "sw" : "ori@1 >= 202.5 AND ori@ <247.5",
+                    "w" : "ori@1 >= 247.5 AND ori@ <292.5",
+                    "nw" : "ori@1 >= 292.5 AND ori@ <337.5",
+                    "n" : "(ori@1 >= 337.5 AND ori@ <360) OR (ori@1 >= 0 AND ori@ <22.5)"}
 class Opera:
     """QGIS Plugin Implementation."""
 
@@ -287,7 +295,7 @@ class Opera:
                 processing.runalg("gdalogr:merge",mnt_list,False,False,5,mnt_path)
                 full_dem = QgsRasterLayer(mnt_path, "" + massif_travail + "_full_dem")
                 
-            # QgsMapLayerRegistry.instance().addMapLayer(full_dem)
+            #QgsMapLayerRegistry.instance().addMapLayer(full_dem)
             
 
             # 2- Carte des pentes --------------------------------------------------------------------------
@@ -314,7 +322,7 @@ class Opera:
                 processing.runalg("gdalogr:aspect",full_dem,1,False,False,False,False,aspect_path)
                 aspect_map = QgsRasterLayer(aspect_path, "" + massif_travail + "_aspect")
 
-            # QgsMapLayerRegistry.instance().addMapLayer(aspect_map)
+            #QgsMapLayerRegistry.instance().addMapLayer(aspect_map)
             
 
 
@@ -327,11 +335,8 @@ class Opera:
 
             # On recherche les prévisions par rapport au massif renseigné dans l'interface
             for mass in bulletin_json:
-                print(mass["massif"]["slug"])
-                print(massif_travail)
                 if mass["massif"]["slug"] == massif_travail:
                     bulletin_massif = mass
-
 
             #Lancement de m'algorithme de Munter correspondant au niveau choisi
             if niv_methode == "radio_MRD":
@@ -341,7 +346,7 @@ class Opera:
                 print('MRE')
                 MRDMRE(bulletin_massif,slope_path,mnt_path, massif_travail, True)
             else:
-                pass
+                MRP(bulletin_massif,slope_path,mnt_path, aspect_path, massif_travail)
 
 
             print("hey")
@@ -472,6 +477,14 @@ def MRP(BRA_massif,slope_map_path, full_dem_path, aspect_map_path, massif_travai
     altitude.bandNumber = 1
     entries.append(altitude)
 
+    #Définition des orientations
+    orientation = QgsRasterCalculatorEntry()
+    orientation.ref = 'ori@1'
+    orientation.raster = aspect_map
+    orientation.bandNumber = 1
+    entries.append(orientation)
+
+
     # Extraction du risque depuis le BRA : maximum entre le risque initial et le risque évolution (qui vaut 0 s'il n'y a pas d'évolution)
     risque = str(max(BRA_massif["risque"]["evolution"]["risqueEvolution"], BRA_massif["risque"]["evolution"]["risqueInitial"]))
 
@@ -483,3 +496,68 @@ def MRP(BRA_massif,slope_map_path, full_dem_path, aspect_map_path, massif_travai
         risque_alt = str(max(BRA_massif["risque"]["evolution"]["risqueEvolutionHighAltitude"], BRA_massif["risque"]["evolution"]["risqueInitialHighAltitude"]))
     else:
         risque_alt = risque
+
+    potentiel_danger = 2**(float(risque))
+    potentiel_danger_alt = 2**(float(risque_alt))
+
+
+    #Définition de la formule, elle est inferieure ou égale à 1 si l'on peut skier, entre 1 et 1.3, il faut faire attention et elle est supéreirue à 1.3 si l'on ne peut pas skier en altitude haute
+    formula = str(potentiel_danger) + "/("
+    # Coefficient d'inclinaison
+    formula += "(((" + str(30.) + "<= slope@1 < " + str(34.) + ")*4)"
+    formula += " + ((" + str(34.) + "<= slope@1 < " + str(36.) + ")*3)"
+    formula += " + ((" + str(36.) + "<= slope@1 <= " + str(39.) + ")*2)"
+    formula += " + ((slope@1 < " + str(30.) + ")*5))"
+
+    # Coefficient d'orientation
+    #NE
+    formula += " * (" + str(BRA_massif["risque"]["pente"]["ne"]) + "*" + ORIENTATION_DICT["ne"] + ") + "
+    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["ne"])+ "*" + "(" + str(BRA_massif["risque"]["pente"]["n"])+ "OR" + str(BRA_massif["risque"]["pente"]["e"])+ ") * "+ ORIENTATION_DICT["ne"] + " * 2) +"
+    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["ne"])+ "*" + "NOT (" + str(BRA_massif["risque"]["pente"]["n"])+ "OR" + str(BRA_massif["risque"]["pente"]["e"]) + ") * " + ORIENTATION_DICT["ne"] + " * 3)"
+    #E
+    formula += " * (" + str(BRA_massif["risque"]["pente"]["e"]) + "*" + ORIENTATION_DICT["n"] + ") + "
+    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["e"]) + "*" + "(" + str(BRA_massif["risque"]["pente"]["ne"])+ "OR" + str(BRA_massif["risque"]["pente"]["se"]) + ") * "+ ORIENTATION_DICT["e"] + " * 2) +"
+    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["e"]) + "*" + "NOT (" + str(BRA_massif["risque"]["pente"]["ne"])+ "OR" + str(BRA_massif["risque"]["pente"]["se"]) + ") * " + ORIENTATION_DICT["e"] + " * 3)"
+    #SE
+    formula += " * (" + str(BRA_massif["risque"]["pente"]["se"]) + "*" + ORIENTATION_DICT["se"] + ") + "
+    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["se"]) + "*" + "(" + str(BRA_massif["risque"]["pente"]["e"]) + "OR" + str(BRA_massif["risque"]["pente"]["s"]) + ") * "+ ORIENTATION_DICT["se"] + " * 2) +"
+    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["se"]) + "*" + "NOT (" + str(BRA_massif["risque"]["pente"]["e"]) + "OR" + str(BRA_massif["risque"]["pente"]["s"]) + ") * " + ORIENTATION_DICT["se"] + " * 3)"
+    #S
+    formula += " * (" + str(BRA_massif["risque"]["pente"]["s"]) + "*" + ORIENTATION_DICT["s"] + ") + "
+    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["s"]) + "*" + "(" + str(BRA_massif["risque"]["pente"]["se"]) + "OR" + str(BRA_massif["risque"]["pente"]["sw"]) + ") * "+ ORIENTATION_DICT["s"] + " * 2) +"
+    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["s"]) + "*" + "NOT (" + str(BRA_massif["risque"]["pente"]["se"]) + "OR" + str(BRA_massif["risque"]["pente"]["sw"]) + ") * " + ORIENTATION_DICT["s"] + " * 3)"
+    #SW
+    formula += " * (" + str(BRA_massif["risque"]["pente"]["sw"]) + "*" + ORIENTATION_DICT["sw"] + ") + "
+    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["sw"]) + "*" + "(" + str(BRA_massif["risque"]["pente"]["s"]) + "OR" + str(BRA_massif["risque"]["pente"]["w"]) + ") * "+ ORIENTATION_DICT["sw"] + " * 2) +"
+    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["sw"]) + "*" + "NOT (" + str(BRA_massif["risque"]["pente"]["s"]) + "OR" + str(BRA_massif["risque"]["pente"]["w"]) + ") * " + ORIENTATION_DICT["sw"] + " * 3)"
+    #W
+    formula += " * (" + str(BRA_massif["risque"]["pente"]["w"]) + "*" + ORIENTATION_DICT["w"] + ") + "
+    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["w"]) + "*" + "(" + str(BRA_massif["risque"]["pente"]["nw"]) + "OR" + str(BRA_massif["risque"]["pente"]["sw"]) + ") * "+ ORIENTATION_DICT["w"] + " * 2) +"
+    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["w"]) + "*" + "NOT (" + str(BRA_massif["risque"]["pente"]["nw"]) + "OR" + str(BRA_massif["risque"]["pente"]["sw"]) + ") * " + ORIENTATION_DICT["w"] + " * 3)"
+    #NW
+    formula += " * (" + str(BRA_massif["risque"]["pente"]["nw"]) + "*" + ORIENTATION_DICT["nw"] + ") + "
+    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["nw"]) + "*" + "(" + str(BRA_massif["risque"]["pente"]["w"]) + "OR" + str(BRA_massif["risque"]["pente"]["n"])+ ") * "+ ORIENTATION_DICT["nw"] + " * 2) +"
+    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["nw"]) + "*" + "NOT (" + str(BRA_massif["risque"]["pente"]["w"]) + "OR" + str(BRA_massif["risque"]["pente"]["n"])+ ") * " + ORIENTATION_DICT["nw"] + " * 3)"
+    #N
+    formula += " * (" + str(BRA_massif["risque"]["pente"]["n"])+ "*" + ORIENTATION_DICT["n"] + ") + "
+    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["n"])+ "*" + "(" + str(BRA_massif["risque"]["pente"]["nw"]) + "OR" + str(BRA_massif["risque"]["pente"]["ne"])+ ") * "+ ORIENTATION_DICT["n"] + " * 2) +"
+    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["n"])+ "*" + "NOT (" + str(BRA_massif["risque"]["pente"]["nw"]) + "OR" + str(BRA_massif["risque"]["pente"]["ne"])+ ") * " + ORIENTATION_DICT["n"] + " * 3)"    
+
+    formula += ")"
+
+    # Chemin de sortie de la couche
+    output_path = PATH_TO_OPERA_PLUGIN + '/tmp/' + massif_travail + '/mrp' + '.tif'
+    # Définition de l'instance de RasterCalculator à partir de la formule définie au dessus, et des dimensions de la carte des pentes
+    calc = QgsRasterCalculator( formula, 
+        output_path, 'GTiff', slope_map.extent(), slope_map.width(), slope_map.height(), entries)
+    # On effectue le calcul
+    calc.processCalculation()
+
+    # On importe la carte obtenue en tant que couche QGIS que l'on ajoute à l'interface
+    layer_name = "output_mrp"
+
+    output_map = QgsRasterLayer(output_path, layer_name)
+
+    QgsMapLayerRegistry.instance().addMapLayer(output_map)
+
+    return None

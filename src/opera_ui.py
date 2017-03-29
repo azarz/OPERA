@@ -115,6 +115,8 @@ class Ui_OperaDialogBase(object):
         self.NO.setObjectName(_fromUtf8("NO"))
         self.label_6 = QtGui.QLabel(OperaDialogBase)
         self.label_6.setGeometry(QtCore.QRect(30, 490, 251, 41))
+        self.label_6.setTextFormat(QtCore.Qt.AutoText)
+        self.label_6.setWordWrap(True)
         self.label_6.setObjectName(_fromUtf8("label_6"))
         self.riskHigh = QtGui.QComboBox(OperaDialogBase)
         self.riskHigh.setGeometry(QtCore.QRect(130, 420, 41, 20))
