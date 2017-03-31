@@ -40,20 +40,20 @@ from qgis.analysis import *
 
 
 # Chemin vers le plugin OPERA, par défaut ~/.qgis2/python/plugins/Opera
-PATH_TO_OPERA_PLUGIN = "/home/dpts/.qgis2/python/plugins/Opera"
+PATH_TO_OPERA_PLUGIN = "C:/Users/Amaury/.qgis2/python/plugins/Opera"
 
 # Dictionnaire associant une couleur à un risque
 RISK_COLOR_DICT = {'1': QColor(202,219,68,128), '2': QColor(255,241,0,128), '3': QColor(247,148,29,128), '4': QColor(238,28,27,128), '5': QColor(190,30,46,128)}
 
 #Dictionnaire associant à une orientation la tranche en degré correspondant
-ORIENTATION_DICT = {"ne" : "ori@1 >= 22.5 AND ori@ <67.5",
-                    "e" : "ori@1 >= 67.5 AND ori@ <112.5",
-                    "se" : "ori@1 >= 112.5 AND ori@ <157.5",
-                    "s" : "ori@1 >= 157.5 AND ori@ <202.5",
-                    "sw" : "ori@1 >= 202.5 AND ori@ <247.5",
-                    "w" : "ori@1 >= 247.5 AND ori@ <292.5",
-                    "nw" : "ori@1 >= 292.5 AND ori@ <337.5",
-                    "n" : "(ori@1 >= 337.5 AND ori@ <360) OR (ori@1 >= 0 AND ori@ <22.5)"}
+ORIENTATION_DICT = {"ne" : "(ori@1 >= 22.5 AND ori@1 <67.5)",
+                    "e" : "(ori@1 >= 67.5 AND ori@1 <112.5)",
+                    "se" : "(ori@1 >= 112.5 AND ori@1 <157.5)",
+                    "s" : "(ori@1 >= 157.5 AND ori@1 <202.5)",
+                    "sw" : "(ori@1 >= 202.5 AND ori@1 <247.5)",
+                    "w" : "(ori@1 >= 247.5 AND ori@1 <292.5)",
+                    "nw" : "(ori@1 >= 292.5 AND ori@1 <337.5)",
+                    "n" : "((ori@1 >= 337.5 AND ori@1 <360) OR (ori@1 >= 0 AND ori@1 <22.5))"}
 class Opera:
     """QGIS Plugin Implementation."""
 
@@ -427,6 +427,7 @@ def MRDMRE(BRA_massif, slope_map_path, full_dem_path, massif_travail, MRE=False)
     formula+= "(slope@1 >= " + str(25. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 4) + " # Cas de l'altitude basse
     formula+= "2 * (slope@1 >= " + str(25. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 4)" #Cas de l'altitude haute
 
+    print(formula)
 
     # Chemin de sortie de la couche
     output_path = PATH_TO_OPERA_PLUGIN + '/tmp/' + massif_travail + '/' + method_type + '.tif'
@@ -502,48 +503,51 @@ def MRP(BRA_massif,slope_map_path, full_dem_path, aspect_map_path, massif_travai
 
 
     #Définition de la formule, elle est inferieure ou égale à 1 si l'on peut skier, entre 1 et 1.3, il faut faire attention et elle est supéreirue à 1.3 si l'on ne peut pas skier en altitude haute
-    formula = str(potentiel_danger) + "/("
+    formula = "((alti@1 < " + altitudeThreshold + ")*" + str(potentiel_danger) + "+ (alti@1 >= " + altitudeThreshold + ")*" + str(potentiel_danger_alt) +  ")/("
     # Coefficient d'inclinaison
-    formula += "(((" + str(30.) + "<= slope@1 < " + str(34.) + ")*4)"
-    formula += " + ((" + str(34.) + "<= slope@1 < " + str(36.) + ")*3)"
-    formula += " + ((" + str(36.) + "<= slope@1 <= " + str(39.) + ")*2)"
+    formula += "(((" + str(30.) + "<= slope@1 AND slope@1 < " + str(34.) + ")*4)"
+    formula += " + ((" + str(34.) + "<= slope@1 AND slope@1 < " + str(36.) + ")*3)"
+    formula += " + ((" + str(36.) + "<= slope@1 AND slope@1 <= " + str(39.) + ")*2)"
     formula += " + ((slope@1 < " + str(30.) + ")*5))"
 
     # Coefficient d'orientation
+    formula += " * ("
     #NE
-    formula += " * (" + str(BRA_massif["risque"]["pente"]["ne"]) + "*" + ORIENTATION_DICT["ne"] + ") + "
-    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["ne"])+ "*" + "(" + str(BRA_massif["risque"]["pente"]["n"])+ "OR" + str(BRA_massif["risque"]["pente"]["e"])+ ") * "+ ORIENTATION_DICT["ne"] + " * 2) +"
-    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["ne"])+ "*" + "NOT (" + str(BRA_massif["risque"]["pente"]["n"])+ "OR" + str(BRA_massif["risque"]["pente"]["e"]) + ") * " + ORIENTATION_DICT["ne"] + " * 3)"
+    formula += "(" + str(int(bool(BRA_massif["risque"]["pente"]["ne"]))) + "*" + ORIENTATION_DICT["ne"] + ") + "
+    formula += "( NOT " + str(int(not bool(BRA_massif["risque"]["pente"]["ne"])))+ "*" + "(" + str(int(bool(BRA_massif["risque"]["pente"]["n"])))+ " OR " + str(int(bool(BRA_massif["risque"]["pente"]["e"])))+ ") * "+ ORIENTATION_DICT["ne"] + " * 2) +"
+    formula += "( NOT " + str(int(not bool(BRA_massif["risque"]["pente"]["ne"])))+ "*" + "(" + str(int(not bool(BRA_massif["risque"]["pente"]["n"])))+ "*" + str(int(not bool(BRA_massif["risque"]["pente"]["e"]))) + ") * " + ORIENTATION_DICT["ne"] + " * 3)"
     #E
-    formula += " * (" + str(BRA_massif["risque"]["pente"]["e"]) + "*" + ORIENTATION_DICT["n"] + ") + "
-    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["e"]) + "*" + "(" + str(BRA_massif["risque"]["pente"]["ne"])+ "OR" + str(BRA_massif["risque"]["pente"]["se"]) + ") * "+ ORIENTATION_DICT["e"] + " * 2) +"
-    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["e"]) + "*" + "NOT (" + str(BRA_massif["risque"]["pente"]["ne"])+ "OR" + str(BRA_massif["risque"]["pente"]["se"]) + ") * " + ORIENTATION_DICT["e"] + " * 3)"
+    formula += " + (" + str(int(bool(BRA_massif["risque"]["pente"]["e"]))) + "*" + ORIENTATION_DICT["n"] + ") + "
+    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["e"]))) + "*" + "(" + str(int(bool(BRA_massif["risque"]["pente"]["ne"])))+ " OR " + str(int(bool(BRA_massif["risque"]["pente"]["se"]))) + ") * "+ ORIENTATION_DICT["e"] + " * 2) +"
+    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["e"]))) + "*" + "(" + str(int(not bool(BRA_massif["risque"]["pente"]["ne"])))+ "*" + str(int(not bool(BRA_massif["risque"]["pente"]["se"]))) + ") * " + ORIENTATION_DICT["e"] + " * 3)"
     #SE
-    formula += " * (" + str(BRA_massif["risque"]["pente"]["se"]) + "*" + ORIENTATION_DICT["se"] + ") + "
-    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["se"]) + "*" + "(" + str(BRA_massif["risque"]["pente"]["e"]) + "OR" + str(BRA_massif["risque"]["pente"]["s"]) + ") * "+ ORIENTATION_DICT["se"] + " * 2) +"
-    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["se"]) + "*" + "NOT (" + str(BRA_massif["risque"]["pente"]["e"]) + "OR" + str(BRA_massif["risque"]["pente"]["s"]) + ") * " + ORIENTATION_DICT["se"] + " * 3)"
+    formula += " + (" + str(int(bool(BRA_massif["risque"]["pente"]["se"]))) + "*" + ORIENTATION_DICT["se"] + ") + "
+    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["se"]))) + "*" + "(" + str(int(bool(BRA_massif["risque"]["pente"]["e"]))) + " OR " + str(int(bool(BRA_massif["risque"]["pente"]["s"]))) + ") * "+ ORIENTATION_DICT["se"] + " * 2) +"
+    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["se"]))) + "*" + "(" + str(int(not bool(BRA_massif["risque"]["pente"]["e"]))) + "*" + str(int(not bool(BRA_massif["risque"]["pente"]["s"]))) + ") * " + ORIENTATION_DICT["se"] + " * 3)"
     #S
-    formula += " * (" + str(BRA_massif["risque"]["pente"]["s"]) + "*" + ORIENTATION_DICT["s"] + ") + "
-    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["s"]) + "*" + "(" + str(BRA_massif["risque"]["pente"]["se"]) + "OR" + str(BRA_massif["risque"]["pente"]["sw"]) + ") * "+ ORIENTATION_DICT["s"] + " * 2) +"
-    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["s"]) + "*" + "NOT (" + str(BRA_massif["risque"]["pente"]["se"]) + "OR" + str(BRA_massif["risque"]["pente"]["sw"]) + ") * " + ORIENTATION_DICT["s"] + " * 3)"
+    formula += " + (" + str(int(bool(BRA_massif["risque"]["pente"]["s"]))) + "*" + ORIENTATION_DICT["s"] + ") + "
+    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["s"]))) + "*" + "(" + str(int(bool(BRA_massif["risque"]["pente"]["se"]))) + " OR " + str(int(bool(BRA_massif["risque"]["pente"]["sw"]))) + ") * "+ ORIENTATION_DICT["s"] + " * 2) +"
+    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["s"]))) + "*" + "(" + str(int(not bool(BRA_massif["risque"]["pente"]["se"]))) + "*" + str(int(not bool(BRA_massif["risque"]["pente"]["sw"]))) + ") * " + ORIENTATION_DICT["s"] + " * 3)"
     #SW
-    formula += " * (" + str(BRA_massif["risque"]["pente"]["sw"]) + "*" + ORIENTATION_DICT["sw"] + ") + "
-    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["sw"]) + "*" + "(" + str(BRA_massif["risque"]["pente"]["s"]) + "OR" + str(BRA_massif["risque"]["pente"]["w"]) + ") * "+ ORIENTATION_DICT["sw"] + " * 2) +"
-    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["sw"]) + "*" + "NOT (" + str(BRA_massif["risque"]["pente"]["s"]) + "OR" + str(BRA_massif["risque"]["pente"]["w"]) + ") * " + ORIENTATION_DICT["sw"] + " * 3)"
+    formula += " + (" + str(int(bool(BRA_massif["risque"]["pente"]["sw"]))) + "*" + ORIENTATION_DICT["sw"] + ") + "
+    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["sw"]))) + "*" + "(" + str(int(bool(BRA_massif["risque"]["pente"]["s"]))) + " OR " + str(int(bool(BRA_massif["risque"]["pente"]["w"]))) + ") * "+ ORIENTATION_DICT["sw"] + " * 2) +"
+    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["sw"]))) + "*" + "(" + str(int(not bool(BRA_massif["risque"]["pente"]["s"]))) + "*" + str(int(not bool(BRA_massif["risque"]["pente"]["w"]))) + ") * " + ORIENTATION_DICT["sw"] + " * 3)"
     #W
-    formula += " * (" + str(BRA_massif["risque"]["pente"]["w"]) + "*" + ORIENTATION_DICT["w"] + ") + "
-    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["w"]) + "*" + "(" + str(BRA_massif["risque"]["pente"]["nw"]) + "OR" + str(BRA_massif["risque"]["pente"]["sw"]) + ") * "+ ORIENTATION_DICT["w"] + " * 2) +"
-    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["w"]) + "*" + "NOT (" + str(BRA_massif["risque"]["pente"]["nw"]) + "OR" + str(BRA_massif["risque"]["pente"]["sw"]) + ") * " + ORIENTATION_DICT["w"] + " * 3)"
+    formula += " + (" + str(int(bool(BRA_massif["risque"]["pente"]["w"]))) + "*" + ORIENTATION_DICT["w"] + ") + "
+    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["w"]))) + "*" + "(" + str(int(bool(BRA_massif["risque"]["pente"]["nw"]))) + " OR " + str(int(bool(BRA_massif["risque"]["pente"]["sw"]))) + ") * "+ ORIENTATION_DICT["w"] + " * 2) +"
+    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["w"]))) + "*" + "(" + str(int(not bool(BRA_massif["risque"]["pente"]["nw"]))) + "*" + str(int(not bool(BRA_massif["risque"]["pente"]["sw"]))) + ") * " + ORIENTATION_DICT["w"] + " * 3)"
     #NW
-    formula += " * (" + str(BRA_massif["risque"]["pente"]["nw"]) + "*" + ORIENTATION_DICT["nw"] + ") + "
-    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["nw"]) + "*" + "(" + str(BRA_massif["risque"]["pente"]["w"]) + "OR" + str(BRA_massif["risque"]["pente"]["n"])+ ") * "+ ORIENTATION_DICT["nw"] + " * 2) +"
-    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["nw"]) + "*" + "NOT (" + str(BRA_massif["risque"]["pente"]["w"]) + "OR" + str(BRA_massif["risque"]["pente"]["n"])+ ") * " + ORIENTATION_DICT["nw"] + " * 3)"
+    formula += " + (" + str(int(bool(BRA_massif["risque"]["pente"]["nw"]))) + "*" + ORIENTATION_DICT["nw"] + ") + "
+    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["nw"]))) + "*" + "(" + str(int(bool(BRA_massif["risque"]["pente"]["w"]))) + " OR " + str(int(bool(BRA_massif["risque"]["pente"]["n"])))+ ") * "+ ORIENTATION_DICT["nw"] + " * 2) +"
+    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["nw"]))) + "*" + "(" + str(int(not bool(BRA_massif["risque"]["pente"]["w"])) )+ "*" + str(int(not bool(BRA_massif["risque"]["pente"]["n"])))+ ") * " + ORIENTATION_DICT["nw"] + " * 3)"
     #N
-    formula += " * (" + str(BRA_massif["risque"]["pente"]["n"])+ "*" + ORIENTATION_DICT["n"] + ") + "
-    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["n"])+ "*" + "(" + str(BRA_massif["risque"]["pente"]["nw"]) + "OR" + str(BRA_massif["risque"]["pente"]["ne"])+ ") * "+ ORIENTATION_DICT["n"] + " * 2) +"
-    formula += "( NOT " + str(BRA_massif["risque"]["pente"]["n"])+ "*" + "NOT (" + str(BRA_massif["risque"]["pente"]["nw"]) + "OR" + str(BRA_massif["risque"]["pente"]["ne"])+ ") * " + ORIENTATION_DICT["n"] + " * 3)"    
+    formula += " + (" + str(int(bool(BRA_massif["risque"]["pente"]["n"])))+ "*" + ORIENTATION_DICT["n"] + ") + "
+    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["n"])))+ "*" + "(" + str(int(bool(BRA_massif["risque"]["pente"]["nw"]))) + " OR " + str(int(bool(BRA_massif["risque"]["pente"]["ne"])))+ ") * "+ ORIENTATION_DICT["n"] + " * 2) +"
+    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["n"])))+ "*" + "(" + str(int(not bool(BRA_massif["risque"]["pente"]["nw"]))) + "*" + str(int(not bool(BRA_massif["risque"]["pente"]["ne"])))+ ") * " + ORIENTATION_DICT["n"] + " * 3))"    
 
     formula += ")"
+
+    print(formula)
 
     # Chemin de sortie de la couche
     output_path = PATH_TO_OPERA_PLUGIN + '/tmp/' + massif_travail + '/mrp' + '.tif'
