@@ -538,7 +538,7 @@ def MRP(BRA_massif,slope_map_path, full_dem_path, aspect_map_path, massif_travai
     potentiel_danger_alt = 2**(float(risque_alt))
 
 
-    #Définition de la formule, elle est inferieure ou égale à 1 si l'on peut skier, entre 1 et 1.3, il faut faire attention et elle est supéreirue à 1.3 si l'on ne peut pas skier en altitude haute
+    #Définition de la formule, elle est inferieure ou égale à 1 si l'on peut skier, entre 1 et 1.3, il faut faire attention et elle est supéreirue à 1.3 si l'on ne peut pas skier
     formula = "((alti@1 < " + altitudeThreshold + ")*" + str(potentiel_danger) + "+ (alti@1 >= " + altitudeThreshold + ")*" + str(potentiel_danger_alt) +  ")/("
     # Coefficient d'inclinaison
     formula += "(((" + str(30.) + "<= slope@1 AND slope@1 < " + str(34.) + ")*4)"
@@ -547,6 +547,7 @@ def MRP(BRA_massif,slope_map_path, full_dem_path, aspect_map_path, massif_travai
     formula += " + ((slope@1 < " + str(30.) + ")*5))"
 
     # Coefficient d'orientation
+    #Application de la méthode Munter en fonction de l'orientation, et des orientations adjacentes
     formula += " * ("
     #NE
     formula += "(" + str(int(bool(BRA_massif["risque"]["pente"]["ne"]))) + "*" + ORIENTATION_DICT["ne"] + ") + "
@@ -595,6 +596,17 @@ def MRP(BRA_massif,slope_map_path, full_dem_path, aspect_map_path, massif_travai
     layer_name = "output_mrp"
 
     output_map = QgsRasterLayer(output_path, layer_name)
+
+    fcn = QgsColorRampShader()
+    fcn.setColorRampType(QgsColorRampShader.INTERPOLATED)
+    lst = [ QgsColorRampShader.ColorRampItem(0, QColor(0,255,0,0)), QgsColorRampShader.ColorRampItem(0.99, QColor(0,255,0,0)), QgsColorRampShader.ColorRampItem(1, RISK_COLOR_DICT['2']), QgsColorRampShader.ColorRampItem(4, RISK_COLOR_DICT['4']), QgsColorRampShader.ColorRampItem(8, RISK_COLOR_DICT['5'])]
+    fcn.setColorRampItemList(lst)
+    shader = QgsRasterShader()
+    shader.setRasterShaderFunction(fcn)
+
+    renderer = QgsSingleBandPseudoColorRenderer(output_map.dataProvider(), 1, shader)
+    output_map.setRenderer(renderer)
+
 
     QgsMapLayerRegistry.instance().addMapLayer(output_map)
 
