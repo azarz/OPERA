@@ -327,16 +327,53 @@ class Opera:
 
 
             # 4- Récuperation des données du BRA Météo France -----------------------------------------------------
-            # URL correspondant au JSON décrivant le BRA, les 2 derniers chiffres correspondant au numéro de département
-            url_meteo_fr = "http://www.meteofrance.com/mf3-rpc-portlet/rest/enneigement/bulletins/cartouches/AVDEPT05"
-            # On convertit la réponse en un dictionnaire Python
-            response = urllib.urlopen(url_meteo_fr)
-            bulletin_json = json.loads(response.read())
+            
+            # Si l'on charge le BRA automatiquement
+            if self.dlg.checkBox.isChecked():
+	            # URL correspondant au JSON décrivant le BRA, les 2 derniers chiffres correspondant au numéro de département
+	            url_meteo_fr = "http://www.meteofrance.com/mf3-rpc-portlet/rest/enneigement/bulletins/cartouches/AVDEPT05"
+	            # On convertit la réponse en un dictionnaire Python
+	            response = urllib.urlopen(url_meteo_fr)
+	            bulletin_json = json.loads(response.read())
 
-            # On recherche les prévisions par rapport au massif renseigné dans l'interface
-            for mass in bulletin_json:
-                if mass["massif"]["slug"] == massif_travail:
-                    bulletin_massif = mass
+	            # On recherche les prévisions par rapport au massif renseigné dans l'interface
+	            for mass in bulletin_json:
+	                if mass["massif"]["slug"] == massif_travail:
+	                    bulletin_massif = mass
+
+
+	        # Sinon, on récupère les données entrées par l'utilisateur
+            else:
+	            # Initialisation du bulletin
+	            bulletin_massif = {}
+	            bulletin_massif["risque"] = {}
+	            bulletin_massif["risque"]["evolution"] = {}
+	            bulletin_massif["risque"]["pente"] = {}
+	            bulletin_massif["risque"]["evolution"]["altitudeDependant"] = True
+
+	            # Récupération des valeurs entrées
+	            risque_bas = self.dlg.riskLow.currentText()
+	            risque_haut = self.dlg.riskHigh.currentText()
+	            thresh = self.dlg.altiThresh.value()
+
+	            # On applique ces valeurs au bulletin
+	            bulletin_massif["risque"]["evolution"]["risqueEvolution"] = risque_bas
+	            bulletin_massif["risque"]["evolution"]["risqueInitial"] = risque_bas
+	            bulletin_massif["risque"]["evolution"]["risqueEvolutionHighAltitude"] = risque_haut
+	            bulletin_massif["risque"]["evolution"]["risqueInitialHighAltitude"] = risque_haut
+
+	            bulletin_massif["risque"]["evolution"]["altitudeThreshold"] = thresh
+
+	            bulletin_massif["risque"]["pente"]["ne"] = self.dlg.NE.isChecked()
+	            bulletin_massif["risque"]["pente"]["n"] = self.dlg.N.isChecked()
+	            bulletin_massif["risque"]["pente"]["nw"] = self.dlg.NO.isChecked()
+	            bulletin_massif["risque"]["pente"]["se"] = self.dlg.SE.isChecked()
+	            bulletin_massif["risque"]["pente"]["sw"] = self.dlg.SO.isChecked()
+	            bulletin_massif["risque"]["pente"]["w"] = self.dlg.O.isChecked()
+	            bulletin_massif["risque"]["pente"]["e"] = self.dlg.E.isChecked()
+	            bulletin_massif["risque"]["pente"]["s"] = self.dlg.S.isChecked()
+
+
 
             #Lancement de m'algorithme de Munter correspondant au niveau choisi
             if niv_methode == "radio_MRD":
@@ -346,6 +383,7 @@ class Opera:
                 print('MRE')
                 MRDMRE(bulletin_massif,slope_path,mnt_path, massif_travail, True)
             else:
+            	print('MRP')
                 MRP(bulletin_massif,slope_path,mnt_path, aspect_path, massif_travail)
 
 
@@ -426,8 +464,6 @@ def MRDMRE(BRA_massif, slope_map_path, full_dem_path, massif_travail, MRE=False)
     # Cas du risque 4:
     formula+= "(slope@1 >= " + str(25. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 4) + " # Cas de l'altitude basse
     formula+= "2 * (slope@1 >= " + str(25. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 4)" #Cas de l'altitude haute
-
-    print(formula)
 
     # Chemin de sortie de la couche
     output_path = PATH_TO_OPERA_PLUGIN + '/tmp/' + massif_travail + '/' + method_type + '.tif'
@@ -546,8 +582,6 @@ def MRP(BRA_massif,slope_map_path, full_dem_path, aspect_map_path, massif_travai
     formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["n"])))+ "*" + "(" + str(int(not bool(BRA_massif["risque"]["pente"]["nw"]))) + "*" + str(int(not bool(BRA_massif["risque"]["pente"]["ne"])))+ ") * " + ORIENTATION_DICT["n"] + " * 3))"    
 
     formula += ")"
-
-    print(formula)
 
     # Chemin de sortie de la couche
     output_path = PATH_TO_OPERA_PLUGIN + '/tmp/' + massif_travail + '/mrp' + '.tif'
