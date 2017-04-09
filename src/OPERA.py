@@ -268,7 +268,7 @@ class Opera:
             # Si le MNT couvrant la zone n'existe pas, on le crée
             if not full_dem.isValid():
 
-            	# On va chercher toutes les tuiles du MNT correspondant aux bornes du shp
+                # On va chercher toutes les tuiles du MNT correspondant aux bornes du shp
                 mnt_list = []
 
                 for x in range (int((xmin//5)*5),int(np.ceil(xmax/5)*5),5):
@@ -303,7 +303,7 @@ class Opera:
             slope_path = PATH_TO_OPERA_PLUGIN + "/data/05/" + massif_travail + "/pente.tif"
             slope_map = QgsRasterLayer(slope_path, "" + massif_travail + "_slopes")
 
-			#Si elle n'existe pas, on la crée
+            #Si elle n'existe pas, on la crée
             if not slope_map.isValid():
                 processing.runalg("gdalogr:slope",full_dem,1,False,False,False,1.0,slope_path)
                 slope_map = QgsRasterLayer(slope_path, "" + massif_travail + "_slopes")
@@ -317,7 +317,7 @@ class Opera:
             aspect_path = PATH_TO_OPERA_PLUGIN + "/data/05/" + massif_travail + "/orientation.tif"
             aspect_map = QgsRasterLayer(aspect_path, "" + massif_travail + "_aspect")
 
-			#Si elle n'existe pas, on la crée
+            #Si elle n'existe pas, on la crée
             if not aspect_map.isValid():
                 processing.runalg("gdalogr:aspect",full_dem,1,False,False,False,False,aspect_path)
                 aspect_map = QgsRasterLayer(aspect_path, "" + massif_travail + "_aspect")
@@ -330,61 +330,61 @@ class Opera:
             
             # Si l'on charge le BRA automatiquement
             if self.dlg.checkBox.isChecked():
-	            # URL correspondant au JSON décrivant le BRA, les 2 derniers chiffres correspondant au numéro de département
-	            url_meteo_fr = "http://www.meteofrance.com/mf3-rpc-portlet/rest/enneigement/bulletins/cartouches/AVDEPT05"
-	            # On convertit la réponse en un dictionnaire Python
-	            response = urllib.urlopen(url_meteo_fr)
-	            bulletin_json = json.loads(response.read())
+                # URL correspondant au JSON décrivant le BRA, les 2 derniers chiffres correspondant au numéro de département
+                url_meteo_fr = "http://www.meteofrance.com/mf3-rpc-portlet/rest/enneigement/bulletins/cartouches/AVDEPT05"
+                # On convertit la réponse en un dictionnaire Python
+                response = urllib.urlopen(url_meteo_fr)
+                bulletin_json = json.loads(response.read())
 
-	            # On recherche les prévisions par rapport au massif renseigné dans l'interface
-	            for mass in bulletin_json:
-	                if mass["massif"]["slug"] == massif_travail:
-	                    bulletin_massif = mass
+                # On recherche les prévisions par rapport au massif renseigné dans l'interface
+                for mass in bulletin_json:
+                    if mass["massif"]["slug"] == massif_travail:
+                        bulletin_massif = mass
 
 
-	        # Sinon, on récupère les données entrées par l'utilisateur
+            # Sinon, on récupère les données entrées par l'utilisateur
             else:
-	            # Initialisation du bulletin
-	            bulletin_massif = {}
-	            bulletin_massif["risque"] = {}
-	            bulletin_massif["risque"]["evolution"] = {}
-	            bulletin_massif["risque"]["pente"] = {}
-	            bulletin_massif["risque"]["evolution"]["altitudeDependant"] = True
+                # Initialisation du bulletin
+                bulletin_massif = {}
+                bulletin_massif["risque"] = {}
+                bulletin_massif["risque"]["evolution"] = {}
+                bulletin_massif["risque"]["pente"] = {}
+                bulletin_massif["risque"]["evolution"]["altitudeDependant"] = True
 
-	            # Récupération des valeurs entrées
-	            risque_bas = self.dlg.riskLow.currentText()
-	            risque_haut = self.dlg.riskHigh.currentText()
-	            thresh = self.dlg.altiThresh.value()
+                # Récupération des valeurs entrées
+                risque_bas = self.dlg.riskLow.currentText()
+                risque_haut = self.dlg.riskHigh.currentText()
+                thresh = self.dlg.altiThresh.value()
 
-	            # On applique ces valeurs au bulletin
-	            bulletin_massif["risque"]["evolution"]["risqueEvolution"] = risque_bas
-	            bulletin_massif["risque"]["evolution"]["risqueInitial"] = risque_bas
-	            bulletin_massif["risque"]["evolution"]["risqueEvolutionHighAltitude"] = risque_haut
-	            bulletin_massif["risque"]["evolution"]["risqueInitialHighAltitude"] = risque_haut
+                # On applique ces valeurs au bulletin
+                bulletin_massif["risque"]["evolution"]["risqueEvolution"] = risque_bas
+                bulletin_massif["risque"]["evolution"]["risqueInitial"] = risque_bas
+                bulletin_massif["risque"]["evolution"]["risqueEvolutionHighAltitude"] = risque_haut
+                bulletin_massif["risque"]["evolution"]["risqueInitialHighAltitude"] = risque_haut
 
-	            bulletin_massif["risque"]["evolution"]["altitudeThreshold"] = thresh
+                bulletin_massif["risque"]["evolution"]["altitudeThreshold"] = thresh
 
-	            bulletin_massif["risque"]["pente"]["ne"] = self.dlg.NE.isChecked()
-	            bulletin_massif["risque"]["pente"]["n"] = self.dlg.N.isChecked()
-	            bulletin_massif["risque"]["pente"]["nw"] = self.dlg.NO.isChecked()
-	            bulletin_massif["risque"]["pente"]["se"] = self.dlg.SE.isChecked()
-	            bulletin_massif["risque"]["pente"]["sw"] = self.dlg.SO.isChecked()
-	            bulletin_massif["risque"]["pente"]["w"] = self.dlg.O.isChecked()
-	            bulletin_massif["risque"]["pente"]["e"] = self.dlg.E.isChecked()
-	            bulletin_massif["risque"]["pente"]["s"] = self.dlg.S.isChecked()
+                bulletin_massif["risque"]["pente"]["ne"] = self.dlg.NE.isChecked()
+                bulletin_massif["risque"]["pente"]["n"] = self.dlg.N.isChecked()
+                bulletin_massif["risque"]["pente"]["nw"] = self.dlg.NO.isChecked()
+                bulletin_massif["risque"]["pente"]["se"] = self.dlg.SE.isChecked()
+                bulletin_massif["risque"]["pente"]["sw"] = self.dlg.SO.isChecked()
+                bulletin_massif["risque"]["pente"]["w"] = self.dlg.O.isChecked()
+                bulletin_massif["risque"]["pente"]["e"] = self.dlg.E.isChecked()
+                bulletin_massif["risque"]["pente"]["s"] = self.dlg.S.isChecked()
 
 
 
-            #Lancement de m'algorithme de Munter correspondant au niveau choisi
+            #Lancement de l'algorithme de Munter correspondant au niveau choisi
             if niv_methode == "radio_MRD":
                 print('MRD')
-                MRDMRE(bulletin_massif,slope_path,mnt_path, massif_travail)
+                mapRiskLayer, riskRenderer = MRDMRE(bulletin_massif,slope_path,mnt_path, massif_travail)
             elif niv_methode == "radio_MRE":
                 print('MRE')
-                MRDMRE(bulletin_massif,slope_path,mnt_path, massif_travail, True)
+                mapRiskLayer, riskRenderer = MRDMRE(bulletin_massif,slope_path,mnt_path, massif_travail, True)
             else:
-            	print('MRP')
-                MRP(bulletin_massif,slope_path,mnt_path, aspect_path, massif_travail)
+                print('MRP')
+                mapRiskLayer, riskRenderer = MRP(bulletin_massif,slope_path,mnt_path, aspect_path, massif_travail)
 
 
             print("hey")
@@ -490,7 +490,10 @@ def MRDMRE(BRA_massif, slope_map_path, full_dem_path, massif_travail, MRE=False)
 
     QgsMapLayerRegistry.instance().addMapLayer(output_map)
 
-    return None
+    return output_map, renderer
+
+
+
 
 
 def MRP(BRA_massif,slope_map_path, full_dem_path, aspect_map_path, massif_travail):
@@ -607,6 +610,27 @@ def MRP(BRA_massif,slope_map_path, full_dem_path, aspect_map_path, massif_travai
     renderer = QgsSingleBandPseudoColorRenderer(output_map.dataProvider(), 1, shader)
     output_map.setRenderer(renderer)
 
+
+    QgsMapLayerRegistry.instance().addMapLayer(output_map)
+
+    return output_map, renderer
+
+
+
+def risk_path(linearLayer, mapRiskLayer, riskRenderer):
+
+    # Définition d'un buffer autour du chemin (distance de 2.5 mètres pour avoir une largeur de 5 mètres, résolution
+    # de la carte de risque)
+    buff = processing.runalg('qgis:fixeddistancebuffer', linearLayer, 2.5, 5, True, None)
+
+    # "Emporte-pièce" de la carte de risque à partir du buffer obtenu
+    path = processing.runalg('gdalogr:warpreproject', {"INPUT": mapRiskLayer, "SOURCE_SRS": "EPSG:2154", 
+                                                "DEST_SRS": "EPSG:2154", "TR": 0.0, "METHOD": 0, 
+                                                "EXTRA": "-cutline " + buff['OUTPUT'], "RTYPE": 5, "OUTPUT": None})
+
+    path_raster = QgsRasterLayer(path['OUTPUT'], "risks_along_path")
+
+    path_raster.setRenderer(riskRenderer)
 
     QgsMapLayerRegistry.instance().addMapLayer(output_map)
 
