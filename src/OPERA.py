@@ -375,16 +375,21 @@ class Opera:
 
 
 
-            #Lancement de l'algorithme de Munter correspondant au niveau choisi
+            #Lancement de l'algorithme de Munter correspondant au niveau choisi et affichage de la couche obtenue
             if niv_methode == "radio_MRD":
                 print('MRD')
                 mapRiskLayer, riskRenderer = MRDMRE(bulletin_massif,slope_path,mnt_path, massif_travail)
+                QgsMapLayerRegistry.instance().addMapLayer(mapRiskLayer)
+
             elif niv_methode == "radio_MRE":
                 print('MRE')
                 mapRiskLayer, riskRenderer = MRDMRE(bulletin_massif,slope_path,mnt_path, massif_travail, True)
+                QgsMapLayerRegistry.instance().addMapLayer(mapRiskLayer)
+
             else:
                 print('MRP')
                 mapRiskLayer, riskRenderer = MRP(bulletin_massif,slope_path,mnt_path, aspect_path, massif_travail)
+                QgsMapLayerRegistry.instance().addMapLayer(mapRiskLayer)
 
 
             print("hey")
@@ -496,9 +501,6 @@ def MRDMRE(BRA_massif, slope_map_path, full_dem_path, massif_travail, MRE=False)
     # On associe le style à la couche
     renderer = QgsSingleBandPseudoColorRenderer(output_map.dataProvider(), 1, shader)
     output_map.setRenderer(renderer)
-
-    # On affiche la couche dans QGIS
-    QgsMapLayerRegistry.instance().addMapLayer(output_map)
 
     # On retourne la couche de sortie et son style
     return output_map, renderer
@@ -647,9 +649,6 @@ def MRP(BRA_massif,slope_map_path, full_dem_path, aspect_map_path, massif_travai
     renderer = QgsSingleBandPseudoColorRenderer(output_map.dataProvider(), 1, shader)
     output_map.setRenderer(renderer)
 
-    # On affiche la couche dans QGIS
-    QgsMapLayerRegistry.instance().addMapLayer(output_map)
-
     # On retourne la couche de sortie et son style
     return output_map, renderer
 
@@ -669,6 +668,10 @@ def risk_path(linearLayer, mapRiskLayer, riskRenderer):
     :type linearLayer: QgsSingleBandPseudoColorRenderer
     """
 
+    # Si besoin, on reprojette le chemin en Lambert 93
+    if linearLayer.crs().authid() != "EPSG:2154":
+    	linLay = processing.runalg("qgis:reprojectlayer", linearLayer, "EPSG:2154", None)
+    	linearLayer = QgsVectorLayer(linLay['OUTPUT'], "chemin")
 
     # Définition d'un buffer autour du chemin (distance de 2.5 mètres pour avoir une largeur de 5 mètres, résolution
     # de la carte de risque)
@@ -683,6 +686,6 @@ def risk_path(linearLayer, mapRiskLayer, riskRenderer):
 
     path_raster.setRenderer(riskRenderer)
 
-    QgsMapLayerRegistry.instance().addMapLayer(output_map)
+    QgsMapLayerRegistry.instance().addMapLayer(path_raster)
 
     return None
