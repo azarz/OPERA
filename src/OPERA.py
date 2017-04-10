@@ -204,26 +204,35 @@ class Opera:
         # remove the toolbar
         del self.toolbar
 
+    def checkbox_state_change(self):
+        """Grise les options non utiles"""
+        # Pour le chemin :
+        self.dlg.couche_chemin.setEnabled(self.dlg.chemin_chkbx.isChecked())
+
+        # Pour le BRA
+        self.dlg.NE.setEnabled(not self.dlg.checkBox.isChecked())
+        self.dlg.N.setEnabled(not self.dlg.checkBox.isChecked())
+        self.dlg.NO.setEnabled(not self.dlg.checkBox.isChecked())
+        self.dlg.SE.setEnabled(not self.dlg.checkBox.isChecked())
+        self.dlg.SO.setEnabled(not self.dlg.checkBox.isChecked())
+        self.dlg.O.setEnabled(not self.dlg.checkBox.isChecked())
+        self.dlg.E.setEnabled(not self.dlg.checkBox.isChecked())
+        self.dlg.S.setEnabled(not self.dlg.checkBox.isChecked())
+        self.dlg.riskLow.setEnabled(not self.dlg.checkBox.isChecked())
+        self.dlg.riskHigh.setEnabled(not self.dlg.checkBox.isChecked())
+        self.dlg.altiThresh.setEnabled(not self.dlg.checkBox.isChecked())
 
     def run(self):
         """Run method that performs all the real work"""
 
-        # On grise les options si elles ne sont pas utiles
-        # self.dlg.couche_chemin.setEnabled(self.dlg.chemin_chkbx.isChecked())
+        self.checkbox_state_change()
 
-        # self.dlg.NE.setEnabled(not self.dlg.checkBox.isChecked())
-        # self.dlg.N.setEnabled(not self.dlg.checkBox.isChecked())
-        # self.dlg.NO.setEnabled(not self.dlg.checkBox.isChecked())
-        # self.dlg.SE.setEnabled(not self.dlg.checkBox.isChecked())
-        # self.dlg.SO.setEnabled(not self.dlg.checkBox.isChecked())
-        # self.dlg.O.setEnabled(not self.dlg.checkBox.isChecked())
-        # self.dlg.E.setEnabled(not self.dlg.checkBox.isChecked())
-        # self.dlg.S.setEnabled(not self.dlg.checkBox.isChecked())
-        # self.dlg.riskLow.setEnabled(not self.dlg.checkBox.isChecked())
-        # self.dlg.riskHigh.setEnabled(not self.dlg.checkBox.isChecked())
-        # self.dlg.altiThresh.setEnabled(not self.dlg.checkBox.isChecked())
+        # Ajoute le changement des champs lorsque les checkbox changent d'état
+        self.dlg.checkBox.stateChanged.connect(self.checkbox_state_change)
+        self.dlg.chemin_chkbx.stateChanged.connect(self.checkbox_state_change)
 
         # Population de la combobox pour le chemin
+        self.dlg.couche_chemin.clear()
         layers = QgsMapLayerRegistry.instance().mapLayers().values()
         for layer in layers:
             if layer.type() == 0:
