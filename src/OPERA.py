@@ -393,8 +393,8 @@ class Opera:
 
 def MRDMRE(BRA_massif, slope_map_path, full_dem_path, massif_travail, MRE=False):
     """
-    Application de la méthode de réduction pour débutants ou élémentaire. Ajoute à la carte QGIS une carte binaire des régions
-    dangereuses (0) ou non (1)
+    Application de la méthode de réduction pour débutants ou élémentaire. Ajoute à la carte QGIS une carte quasi-binaire des régions
+    dangereuses (2 en altitude haute, 1 sinon) ou non (0)
 
     :param BRA_massif: dictionnaire issu de BRA correspondant au massif de travail
     :type BRA_massif: dict
@@ -405,8 +405,14 @@ def MRDMRE(BRA_massif, slope_map_path, full_dem_path, massif_travail, MRE=False)
     :param full_dem_path: chaîne de caractères correspondant au chemin du MNT du massif
     :type full_dem_path: str
 
+    :param massif_travail: chaîne de caractères correspondant au massif de travail
+    :type massif_travail: str
+
     :param MRE: booléen qui est Vrai si la méthode utilisée est la MRE, et Faux si c'est la MRD
-    :param MRE: bool
+    :type MRE: bool
+
+    :returns: Tuple de la couche de risque en sortie et de son style (renderer)
+    :rtype: QgsRasterLayer, QgsSingleBandPseudoColorRenderer
     """
 
     # On importe la carte des pentes et le MNT
@@ -473,23 +479,28 @@ def MRDMRE(BRA_massif, slope_map_path, full_dem_path, massif_travail, MRE=False)
     # On effectue le calcul
     calc.processCalculation()
 
-    # On importe la carte obtenue en tant que couche QGIS que l'on ajoute à l'interface
+    # On importe la carte obtenue en tant que couche QGIS
     layer_name = "output_" + method_type
 
     output_map = QgsRasterLayer(output_path, layer_name)
 
+    # Définition du style d'affichage
     fcn = QgsColorRampShader()
     fcn.setColorRampType(QgsColorRampShader.INTERPOLATED)
-    lst = [ QgsColorRampShader.ColorRampItem(0, QColor(255,255,255,0)), QgsColorRampShader.ColorRampItem(1, RISK_COLOR_DICT[risque]), QgsColorRampShader.ColorRampItem(2, RISK_COLOR_DICT[risque_alt]) ]
+    # Couleurs en fonction du risque et de la valeur du pixel
+    lst = [ QgsColorRampShader.ColorRampItem(0, QColor(255,255,255,0)),
+    		QgsColorRampShader.ColorRampItem(1, RISK_COLOR_DICT[risque]), QgsColorRampShader.ColorRampItem(2, RISK_COLOR_DICT[risque_alt]) ]
     fcn.setColorRampItemList(lst)
     shader = QgsRasterShader()
     shader.setRasterShaderFunction(fcn)
-
+    # On associe le style à la couche
     renderer = QgsSingleBandPseudoColorRenderer(output_map.dataProvider(), 1, shader)
     output_map.setRenderer(renderer)
 
+    # On affiche la couche dans QGIS
     QgsMapLayerRegistry.instance().addMapLayer(output_map)
 
+    # On retourne la couche de sortie et son style
     return output_map, renderer
 
 
@@ -497,6 +508,28 @@ def MRDMRE(BRA_massif, slope_map_path, full_dem_path, massif_travail, MRE=False)
 
 
 def MRP(BRA_massif,slope_map_path, full_dem_path, aspect_map_path, massif_travail):
+    """
+    Application de la méthode de réduction pour experts
+
+    :param BRA_massif: dictionnaire issu de BRA correspondant au massif de travail
+    :type BRA_massif: dict
+
+    :param slope_map_path: chaîne de caractères correspondant au chemin de la carte des pentes
+    :type slope_map_path: str
+
+    :param full_dem_path: chaîne de caractères correspondant au chemin du MNT du massif
+    :type full_dem_path: str
+
+    :param full_dem_path: chaîne de caractères correspondant au chemin de la carte des orientations
+    :type full_dem_path: str
+
+    :param massif_travail: chaîne de caractères correspondant au massif de travail
+    :type massif_travail: str
+
+    :returns: Tuple de la couche de risque en sortie et de son style (renderer)
+    :rtype: QgsRasterLayer, QgsSingleBandPseudoColorRenderer
+    """
+
     # On importe la carte des pentes et le MNT
     slope_map = QgsRasterLayer(slope_map_path, "slopes")
     full_dem = QgsRasterLayer(full_dem_path, "full_dem")
@@ -595,29 +628,47 @@ def MRP(BRA_massif,slope_map_path, full_dem_path, aspect_map_path, massif_travai
     # On effectue le calcul
     calc.processCalculation()
 
-    # On importe la carte obtenue en tant que couche QGIS que l'on ajoute à l'interface
+    # On importe la carte obtenue en tant que couche QGIS
     layer_name = "output_mrp"
 
     output_map = QgsRasterLayer(output_path, layer_name)
 
+	# Définition du style d'affichage
     fcn = QgsColorRampShader()
     fcn.setColorRampType(QgsColorRampShader.INTERPOLATED)
-    lst = [ QgsColorRampShader.ColorRampItem(0, QColor(0,255,0,0)), QgsColorRampShader.ColorRampItem(0.99, QColor(0,255,0,0)), QgsColorRampShader.ColorRampItem(1, RISK_COLOR_DICT['2']), QgsColorRampShader.ColorRampItem(4, RISK_COLOR_DICT['4']), QgsColorRampShader.ColorRampItem(8, RISK_COLOR_DICT['5'])]
+    # Couleurs en fonction de la valeur du pixel
+    lst = [ QgsColorRampShader.ColorRampItem(0, QColor(0,255,0,0)), QgsColorRampShader.ColorRampItem(0.99, QColor(0,255,0,0)), 
+    		QgsColorRampShader.ColorRampItem(1, RISK_COLOR_DICT['2']), QgsColorRampShader.ColorRampItem(4, RISK_COLOR_DICT['4']), 
+    		QgsColorRampShader.ColorRampItem(8, RISK_COLOR_DICT['5'])]
     fcn.setColorRampItemList(lst)
     shader = QgsRasterShader()
     shader.setRasterShaderFunction(fcn)
-
+	# On associe le style à la couche
     renderer = QgsSingleBandPseudoColorRenderer(output_map.dataProvider(), 1, shader)
     output_map.setRenderer(renderer)
 
-
+    # On affiche la couche dans QGIS
     QgsMapLayerRegistry.instance().addMapLayer(output_map)
 
+    # On retourne la couche de sortie et son style
     return output_map, renderer
 
 
 
 def risk_path(linearLayer, mapRiskLayer, riskRenderer):
+	"""
+   	Fonction qui à partir d'une polyligne verteur et d'une carte des risques renvoie les risques sur le chemin
+
+    :param linearLayer: couche vecteur du chemin
+    :type linearLayer: QgsVectorLayer
+
+    :param linearLayer: couche raster correspondant à la carte des risques
+    :type linearLayer: QgsRasterLayer
+
+    :param linearLayer: renderer associé à la carte des risques
+    :type linearLayer: QgsSingleBandPseudoColorRenderer
+    """
+
 
     # Définition d'un buffer autour du chemin (distance de 2.5 mètres pour avoir une largeur de 5 mètres, résolution
     # de la carte de risque)
