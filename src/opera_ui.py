@@ -138,6 +138,13 @@ class Ui_OperaDialogBase(object):
         self.altiThresh.setGeometry(QtCore.QRect(190, 430, 61, 22))
         self.altiThresh.setMaximum(9999)
         self.altiThresh.setObjectName(_fromUtf8("altiThresh"))
+        self.chemin_chkbx = QtGui.QCheckBox(OperaDialogBase)
+        self.chemin_chkbx.setGeometry(QtCore.QRect(60, 580, 181, 17))
+        self.chemin_chkbx.setObjectName(_fromUtf8("chemin_chkbx"))
+        self.couche_chemin = QtGui.QComboBox(OperaDialogBase)
+        self.couche_chemin.setEnabled(True)
+        self.couche_chemin.setGeometry(QtCore.QRect(70, 610, 101, 22))
+        self.couche_chemin.setObjectName(_fromUtf8("couche_chemin"))
         self.label.raise_()
         self.button_box.raise_()
         self.radio_MRE.raise_()
@@ -161,6 +168,8 @@ class Ui_OperaDialogBase(object):
         self.riskHigh.raise_()
         self.riskLow.raise_()
         self.altiThresh.raise_()
+        self.chemin_chkbx.raise_()
+        self.couche_chemin.raise_()
 
         self.retranslateUi(OperaDialogBase)
         self.riskHigh.setCurrentIndex(0)
@@ -193,4 +202,5 @@ class Ui_OperaDialogBase(object):
         self.riskLow.setItemText(2, _translate("OperaDialogBase", "3", None))
         self.riskLow.setItemText(3, _translate("OperaDialogBase", "4", None))
         self.riskLow.setItemText(4, _translate("OperaDialogBase", "5", None))
+        self.chemin_chkbx.setText(_translate("OperaDialogBase", "Risque selon un chemin", None))
 

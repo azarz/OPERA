@@ -43,7 +43,7 @@ from qgis.analysis import *
 PATH_TO_OPERA_PLUGIN = "C:/Users/Amaury/.qgis2/python/plugins/Opera"
 
 # Dictionnaire associant une couleur à un risque
-RISK_COLOR_DICT = {'1': QColor(202,219,68,128), '2': QColor(255,241,0,128), '3': QColor(247,148,29,128), '4': QColor(238,28,27,128), '5': QColor(190,30,46,128)}
+RISK_COLOR_DICT = {'1': QColor(202,219,68,255), '2': QColor(255,241,0,255), '3': QColor(247,148,29,255), '4': QColor(238,28,27,255), '5': QColor(190,30,46,255)}
 
 #Dictionnaire associant à une orientation la tranche en degré correspondant
 ORIENTATION_DICT = {"ne" : "(ori@1 >= 22.5 AND ori@1 <67.5)",
@@ -207,10 +207,33 @@ class Opera:
 
     def run(self):
         """Run method that performs all the real work"""
+
+        # On grise les options si elles ne sont pas utiles
+        # self.dlg.couche_chemin.setEnabled(self.dlg.chemin_chkbx.isChecked())
+
+        # self.dlg.NE.setEnabled(not self.dlg.checkBox.isChecked())
+        # self.dlg.N.setEnabled(not self.dlg.checkBox.isChecked())
+        # self.dlg.NO.setEnabled(not self.dlg.checkBox.isChecked())
+        # self.dlg.SE.setEnabled(not self.dlg.checkBox.isChecked())
+        # self.dlg.SO.setEnabled(not self.dlg.checkBox.isChecked())
+        # self.dlg.O.setEnabled(not self.dlg.checkBox.isChecked())
+        # self.dlg.E.setEnabled(not self.dlg.checkBox.isChecked())
+        # self.dlg.S.setEnabled(not self.dlg.checkBox.isChecked())
+        # self.dlg.riskLow.setEnabled(not self.dlg.checkBox.isChecked())
+        # self.dlg.riskHigh.setEnabled(not self.dlg.checkBox.isChecked())
+        # self.dlg.altiThresh.setEnabled(not self.dlg.checkBox.isChecked())
+
+        # Population de la combobox pour le chemin
+        layers = QgsMapLayerRegistry.instance().mapLayers().values()
+        for layer in layers:
+            if layer.type() == 0:
+                self.dlg.couche_chemin.addItem(layer.name(), layer)
+
         # show the dialog
         self.dlg.show()
         # Run the dialog event loop
         result = self.dlg.exec_()
+
 
 
         # En appuyant sur la touche OK :
@@ -222,10 +245,6 @@ class Opera:
 
             #Recupération de la methode
             niv_methode = self.dlg.radio_niveau.checkedButton().objectName()
-            
-
-            # pour reprojeter en Lambert 93 
-            # processing.runalg("qgis:reprojectlayer", area, "EPSG:2154", "massif")
 
             # Importation du shp qui décrit la zone et des ses coordonnées maximales et minimales
             area = QgsVectorLayer(PATH_TO_OPERA_PLUGIN + "/data/05/" + massif_travail + "/shp/" + massif_travail + ".shp", massif_travail, "ogr")
@@ -379,18 +398,24 @@ class Opera:
             if niv_methode == "radio_MRD":
                 print('MRD')
                 mapRiskLayer, riskRenderer = MRDMRE(bulletin_massif,slope_path,mnt_path, massif_travail)
-                QgsMapLayerRegistry.instance().addMapLayer(mapRiskLayer)
-
+                
             elif niv_methode == "radio_MRE":
                 print('MRE')
                 mapRiskLayer, riskRenderer = MRDMRE(bulletin_massif,slope_path,mnt_path, massif_travail, True)
-                QgsMapLayerRegistry.instance().addMapLayer(mapRiskLayer)
 
             else:
                 print('MRP')
                 mapRiskLayer, riskRenderer = MRP(bulletin_massif,slope_path,mnt_path, aspect_path, massif_travail)
+                
+            # Si l'on procède sur toute la zone, on affiche toute la zone, sinon, on n'affiche que le chemin
+            if not self.dlg.chemin_chkbx.isChecked():
                 QgsMapLayerRegistry.instance().addMapLayer(mapRiskLayer)
 
+            else:
+                # Récupération du linearLayer à partir de l'interface
+                indexCouche = self.dlg.couche_chemin.currentIndex()
+                linearLayer = self.dlg.couche_chemin.itemData(indexCouche)
+                risk_path(linearLayer, mapRiskLayer, riskRenderer)
 
             print("hey")
 
@@ -494,16 +519,17 @@ def MRDMRE(BRA_massif, slope_map_path, full_dem_path, massif_travail, MRE=False)
     fcn.setColorRampType(QgsColorRampShader.INTERPOLATED)
     # Couleurs en fonction du risque et de la valeur du pixel
     lst = [ QgsColorRampShader.ColorRampItem(0, QColor(255,255,255,0)),
-    		QgsColorRampShader.ColorRampItem(1, RISK_COLOR_DICT[risque]), QgsColorRampShader.ColorRampItem(2, RISK_COLOR_DICT[risque_alt]) ]
+            QgsColorRampShader.ColorRampItem(1, RISK_COLOR_DICT[risque]), QgsColorRampShader.ColorRampItem(2, RISK_COLOR_DICT[risque_alt]) ]
     fcn.setColorRampItemList(lst)
     shader = QgsRasterShader()
     shader.setRasterShaderFunction(fcn)
     # On associe le style à la couche
     renderer = QgsSingleBandPseudoColorRenderer(output_map.dataProvider(), 1, shader)
+    renderer.setOpacity(0.5)
     output_map.setRenderer(renderer)
 
     # On retourne la couche de sortie et son style
-    return output_map, renderer
+    return output_map, lst
 
 
 
@@ -635,18 +661,19 @@ def MRP(BRA_massif,slope_map_path, full_dem_path, aspect_map_path, massif_travai
 
     output_map = QgsRasterLayer(output_path, layer_name)
 
-	# Définition du style d'affichage
+    # Définition du style d'affichage
     fcn = QgsColorRampShader()
     fcn.setColorRampType(QgsColorRampShader.INTERPOLATED)
     # Couleurs en fonction de la valeur du pixel
     lst = [ QgsColorRampShader.ColorRampItem(0, QColor(0,255,0,0)), QgsColorRampShader.ColorRampItem(0.99, QColor(0,255,0,0)), 
-    		QgsColorRampShader.ColorRampItem(1, RISK_COLOR_DICT['2']), QgsColorRampShader.ColorRampItem(4, RISK_COLOR_DICT['4']), 
-    		QgsColorRampShader.ColorRampItem(8, RISK_COLOR_DICT['5'])]
+            QgsColorRampShader.ColorRampItem(1, RISK_COLOR_DICT['2']), QgsColorRampShader.ColorRampItem(4, RISK_COLOR_DICT['4']), 
+            QgsColorRampShader.ColorRampItem(8, RISK_COLOR_DICT['5'])]
     fcn.setColorRampItemList(lst)
     shader = QgsRasterShader()
     shader.setRasterShaderFunction(fcn)
-	# On associe le style à la couche
+    # On associe le style à la couche
     renderer = QgsSingleBandPseudoColorRenderer(output_map.dataProvider(), 1, shader)
+    renderer.setOpacity(0.5)
     output_map.setRenderer(renderer)
 
     # On retourne la couche de sortie et son style
@@ -655,8 +682,8 @@ def MRP(BRA_massif,slope_map_path, full_dem_path, aspect_map_path, massif_travai
 
 
 def risk_path(linearLayer, mapRiskLayer, riskRenderer):
-	"""
-   	Fonction qui à partir d'une polyligne verteur et d'une carte des risques renvoie les risques sur le chemin
+    """
+    Fonction qui à partir d'une polyligne verteur et d'une carte des risques renvoie les risques sur le chemin
 
     :param linearLayer: couche vecteur du chemin
     :type linearLayer: QgsVectorLayer
@@ -670,13 +697,13 @@ def risk_path(linearLayer, mapRiskLayer, riskRenderer):
 
     # Si besoin, on reprojette le chemin en Lambert 93
     if linearLayer.crs().authid() != "EPSG:2154":
-    	linLay = processing.runalg("qgis:reprojectlayer", linearLayer, "EPSG:2154", None)
-    	linearLayer = QgsVectorLayer(linLay['OUTPUT'], "chemin")
+        linLay = processing.runalg("qgis:reprojectlayer", linearLayer, "EPSG:2154", None)
+        linearLayer = QgsVectorLayer(linLay['OUTPUT'], "chemin")
 
     # Définition d'un buffer autour du chemin (distance de 2.5 mètres pour avoir une largeur de 5 mètres, résolution
     # de la carte de risque)
     buff = processing.runalg('qgis:fixeddistancebuffer', linearLayer, 2.5, 5, True, None)
-
+    
     # "Emporte-pièce" de la carte de risque à partir du buffer obtenu
     path = processing.runalg('gdalogr:warpreproject', {"INPUT": mapRiskLayer, "SOURCE_SRS": "EPSG:2154", 
                                                 "DEST_SRS": "EPSG:2154", "TR": 0.0, "METHOD": 0, 
@@ -684,8 +711,17 @@ def risk_path(linearLayer, mapRiskLayer, riskRenderer):
 
     path_raster = QgsRasterLayer(path['OUTPUT'], "risks_along_path")
 
-    path_raster.setRenderer(riskRenderer)
-
+    # Définition du style d'affichage
+    fcn = QgsColorRampShader()
+    fcn.setColorRampType(QgsColorRampShader.INTERPOLATED)
+    # Couleurs en fonction du renderer de la méthode
+    fcn.setColorRampItemList(riskRenderer)
+    shader = QgsRasterShader()
+    shader.setRasterShaderFunction(fcn)
+    # On associe le style à la couche
+    renderer = QgsSingleBandPseudoColorRenderer(path_raster.dataProvider(), 1, shader)
+    path_raster.setRenderer(renderer)
+    
     QgsMapLayerRegistry.instance().addMapLayer(path_raster)
 
     return None
