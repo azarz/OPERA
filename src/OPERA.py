@@ -40,7 +40,7 @@ from qgis.analysis import *
 
 
 # Chemin vers le plugin OPERA, par défaut ~/.qgis2/python/plugins/Opera
-PATH_TO_OPERA_PLUGIN = "C:/Users/Amaury/.qgis2/python/plugins/Opera"
+PATH_TO_OPERA_PLUGIN = "/home/dpts/.qgis2/python/plugins/Opera"
 
 # Dictionnaire associant une couleur à un risque
 RISK_COLOR_DICT = {'1': QColor(202,219,68,255), '2': QColor(255,241,0,255), '3': QColor(247,148,29,255), '4': QColor(238,28,27,255), '5': QColor(190,30,46,255)}
@@ -617,9 +617,19 @@ def MRP(BRA_massif,slope_map_path, full_dem_path, aspect_map_path, massif_travai
     formula += "(((" + str(30.) + "<= slope@1 AND slope@1 < " + str(34.) + ")*4)"
     formula += " + ((" + str(34.) + "<= slope@1 AND slope@1 < " + str(36.) + ")*3)"
     formula += " + ((" + str(36.) + "<= slope@1 AND slope@1 <= " + str(39.) + ")*2)"
+    formula += " + (slope@1 > " + str(39.) + ")"
     formula += " + ((slope@1 < " + str(30.) + ")*5))"
 
     # Coefficient d'orientation
+    formula += "* ( 3 * (ori@1 > 112.5 AND ori@1 < 292.5)"
+    formula += " + 2 * ((ori@1 > 67.5 AND ori@1 <=112.5) OR (ori@1 >= 292.5 AND ori@1 <315))"
+    formula += " + ((ori@1 > 0 AND ori@1 <= 45 ) OR ( ori@1 >= 315 AND ori@1 <= 360 )))"
+    formula += ")"
+    # (ori@1 >= 22.5 AND ori@1 <67.5)
+    
+    '''
+    #N
+    formula += "("+ str(int())
     #Application de la méthode Munter en fonction de l'orientation, et des orientations adjacentes
     formula += " * ("
     #NE
@@ -656,6 +666,8 @@ def MRP(BRA_massif,slope_map_path, full_dem_path, aspect_map_path, massif_travai
     formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["n"])))+ "*" + "(" + str(int(not bool(BRA_massif["risque"]["pente"]["nw"]))) + "*" + str(int(not bool(BRA_massif["risque"]["pente"]["ne"])))+ ") * " + ORIENTATION_DICT["n"] + " * 3))"    
 
     formula += ")"
+
+    '''
 
     # Chemin de sortie de la couche
     output_path = PATH_TO_OPERA_PLUGIN + '/tmp/' + massif_travail + '/mrp' + '.tif'
