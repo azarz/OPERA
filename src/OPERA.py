@@ -37,6 +37,8 @@ import processing
 from qgis.core import *
 import numpy as np
 from qgis.analysis import *
+from qgis.gui import *
+from qgis.utils import iface
 
 
 # Chemin vers le plugin OPERA, par défaut ~/.qgis2/python/plugins/Opera
@@ -54,6 +56,14 @@ ORIENTATION_DICT = {"ne" : "(ori@1 >= 22.5 AND ori@1 <67.5)",
                     "w" : "(ori@1 >= 247.5 AND ori@1 <292.5)",
                     "nw" : "(ori@1 >= 292.5 AND ori@1 <337.5)",
                     "n" : "((ori@1 >= 337.5 AND ori@1 <360) OR (ori@1 >= 0 AND ori@1 <22.5))"}
+
+class Bar(QProgressBar):
+    value = 0
+    def increaseValue(self):
+        self.setValue(self.value)
+        self.value += 1
+
+
 class Opera:
     """QGIS Plugin Implementation."""
 
@@ -210,14 +220,14 @@ class Opera:
         self.dlg.couche_chemin.setEnabled(self.dlg.chemin_chkbx.isChecked())
 
         # Pour le BRA
-        self.dlg.NE.setEnabled(not self.dlg.checkBox.isChecked())
-        self.dlg.N.setEnabled(not self.dlg.checkBox.isChecked())
-        self.dlg.NO.setEnabled(not self.dlg.checkBox.isChecked())
-        self.dlg.SE.setEnabled(not self.dlg.checkBox.isChecked())
-        self.dlg.SO.setEnabled(not self.dlg.checkBox.isChecked())
-        self.dlg.O.setEnabled(not self.dlg.checkBox.isChecked())
-        self.dlg.E.setEnabled(not self.dlg.checkBox.isChecked())
-        self.dlg.S.setEnabled(not self.dlg.checkBox.isChecked())
+        self.dlg.NE.setEnabled(not self.dlg.checkBox.isChecked() and not self.dlg.radio_MRP.isChecked())
+        self.dlg.N.setEnabled(not self.dlg.checkBox.isChecked() and not self.dlg.radio_MRP.isChecked())
+        self.dlg.NO.setEnabled(not self.dlg.checkBox.isChecked() and not self.dlg.radio_MRP.isChecked())
+        self.dlg.SE.setEnabled(not self.dlg.checkBox.isChecked() and not self.dlg.radio_MRP.isChecked())
+        self.dlg.SO.setEnabled(not self.dlg.checkBox.isChecked() and not self.dlg.radio_MRP.isChecked())
+        self.dlg.O.setEnabled(not self.dlg.checkBox.isChecked() and not self.dlg.radio_MRP.isChecked())
+        self.dlg.E.setEnabled(not self.dlg.checkBox.isChecked() and not self.dlg.radio_MRP.isChecked())
+        self.dlg.S.setEnabled(not self.dlg.checkBox.isChecked() and not self.dlg.radio_MRP.isChecked())
         self.dlg.riskLow.setEnabled(not self.dlg.checkBox.isChecked())
         self.dlg.riskHigh.setEnabled(not self.dlg.checkBox.isChecked())
         self.dlg.altiThresh.setEnabled(not self.dlg.checkBox.isChecked())
@@ -230,6 +240,8 @@ class Opera:
         # Ajoute le changement des champs lorsque les checkbox changent d'état
         self.dlg.checkBox.stateChanged.connect(self.checkbox_state_change)
         self.dlg.chemin_chkbx.stateChanged.connect(self.checkbox_state_change)
+        self.dlg.radio_niveau.buttonClicked.connect(self.checkbox_state_change)
+
 
         # Population de la combobox pour le chemin
         self.dlg.couche_chemin.clear()
@@ -401,7 +413,7 @@ class Opera:
                 bulletin_massif["risque"]["pente"]["e"] = self.dlg.E.isChecked()
                 bulletin_massif["risque"]["pente"]["s"] = self.dlg.S.isChecked()
 
-
+            bar.increaseValue()
 
             #Lancement de l'algorithme de Munter correspondant au niveau choisi et affichage de la couche obtenue
             if niv_methode == "radio_MRD":
@@ -415,7 +427,9 @@ class Opera:
             else:
                 print('MRP')
                 mapRiskLayer, riskRenderer = MRP(bulletin_massif,slope_path,mnt_path, aspect_path, massif_travail)
-                
+
+            bar.increaseValue()
+
             # Si l'on procède sur toute la zone, on affiche toute la zone, sinon, on n'affiche que le chemin
             if not self.dlg.chemin_chkbx.isChecked():
                 QgsMapLayerRegistry.instance().addMapLayer(mapRiskLayer)
@@ -425,6 +439,8 @@ class Opera:
                 indexCouche = self.dlg.couche_chemin.currentIndex()
                 linearLayer = self.dlg.couche_chemin.itemData(indexCouche)
                 risk_path(linearLayer, mapRiskLayer, riskRenderer)
+
+            bar.increaseValue()
 
             print("hey")
 
@@ -528,7 +544,8 @@ def MRDMRE(BRA_massif, slope_map_path, full_dem_path, massif_travail, MRE=False)
     fcn.setColorRampType(QgsColorRampShader.INTERPOLATED)
     # Couleurs en fonction du risque et de la valeur du pixel
     lst = [ QgsColorRampShader.ColorRampItem(0, QColor(255,255,255,0)),
-            QgsColorRampShader.ColorRampItem(1, RISK_COLOR_DICT[risque]), QgsColorRampShader.ColorRampItem(2, RISK_COLOR_DICT[risque_alt]) ]
+            QgsColorRampShader.ColorRampItem(1, RISK_COLOR_DICT[risque], "zone risque " + risque), 
+            QgsColorRampShader.ColorRampItem(2, RISK_COLOR_DICT[risque_alt], "zone risque " + risque_alt) ]
     fcn.setColorRampItemList(lst)
     shader = QgsRasterShader()
     shader.setRasterShaderFunction(fcn)
@@ -625,49 +642,6 @@ def MRP(BRA_massif,slope_map_path, full_dem_path, aspect_map_path, massif_travai
     formula += " + 2 * ((ori@1 > 67.5 AND ori@1 <=112.5) OR (ori@1 >= 292.5 AND ori@1 <315))"
     formula += " + ((ori@1 > 0 AND ori@1 <= 45 ) OR ( ori@1 >= 315 AND ori@1 <= 360 )))"
     formula += ")"
-    # (ori@1 >= 22.5 AND ori@1 <67.5)
-    
-    '''
-    #N
-    formula += "("+ str(int())
-    #Application de la méthode Munter en fonction de l'orientation, et des orientations adjacentes
-    formula += " * ("
-    #NE
-    formula += "(" + str(int(bool(BRA_massif["risque"]["pente"]["ne"]))) + "*" + ORIENTATION_DICT["ne"] + ") + "
-    formula += "( NOT " + str(int(not bool(BRA_massif["risque"]["pente"]["ne"])))+ "*" + "(" + str(int(bool(BRA_massif["risque"]["pente"]["n"])))+ " OR " + str(int(bool(BRA_massif["risque"]["pente"]["e"])))+ ") * "+ ORIENTATION_DICT["ne"] + " * 2) +"
-    formula += "( NOT " + str(int(not bool(BRA_massif["risque"]["pente"]["ne"])))+ "*" + "(" + str(int(not bool(BRA_massif["risque"]["pente"]["n"])))+ "*" + str(int(not bool(BRA_massif["risque"]["pente"]["e"]))) + ") * " + ORIENTATION_DICT["ne"] + " * 3)"
-    #E
-    formula += " + (" + str(int(bool(BRA_massif["risque"]["pente"]["e"]))) + "*" + ORIENTATION_DICT["n"] + ") + "
-    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["e"]))) + "*" + "(" + str(int(bool(BRA_massif["risque"]["pente"]["ne"])))+ " OR " + str(int(bool(BRA_massif["risque"]["pente"]["se"]))) + ") * "+ ORIENTATION_DICT["e"] + " * 2) +"
-    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["e"]))) + "*" + "(" + str(int(not bool(BRA_massif["risque"]["pente"]["ne"])))+ "*" + str(int(not bool(BRA_massif["risque"]["pente"]["se"]))) + ") * " + ORIENTATION_DICT["e"] + " * 3)"
-    #SE
-    formula += " + (" + str(int(bool(BRA_massif["risque"]["pente"]["se"]))) + "*" + ORIENTATION_DICT["se"] + ") + "
-    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["se"]))) + "*" + "(" + str(int(bool(BRA_massif["risque"]["pente"]["e"]))) + " OR " + str(int(bool(BRA_massif["risque"]["pente"]["s"]))) + ") * "+ ORIENTATION_DICT["se"] + " * 2) +"
-    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["se"]))) + "*" + "(" + str(int(not bool(BRA_massif["risque"]["pente"]["e"]))) + "*" + str(int(not bool(BRA_massif["risque"]["pente"]["s"]))) + ") * " + ORIENTATION_DICT["se"] + " * 3)"
-    #S
-    formula += " + (" + str(int(bool(BRA_massif["risque"]["pente"]["s"]))) + "*" + ORIENTATION_DICT["s"] + ") + "
-    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["s"]))) + "*" + "(" + str(int(bool(BRA_massif["risque"]["pente"]["se"]))) + " OR " + str(int(bool(BRA_massif["risque"]["pente"]["sw"]))) + ") * "+ ORIENTATION_DICT["s"] + " * 2) +"
-    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["s"]))) + "*" + "(" + str(int(not bool(BRA_massif["risque"]["pente"]["se"]))) + "*" + str(int(not bool(BRA_massif["risque"]["pente"]["sw"]))) + ") * " + ORIENTATION_DICT["s"] + " * 3)"
-    #SW
-    formula += " + (" + str(int(bool(BRA_massif["risque"]["pente"]["sw"]))) + "*" + ORIENTATION_DICT["sw"] + ") + "
-    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["sw"]))) + "*" + "(" + str(int(bool(BRA_massif["risque"]["pente"]["s"]))) + " OR " + str(int(bool(BRA_massif["risque"]["pente"]["w"]))) + ") * "+ ORIENTATION_DICT["sw"] + " * 2) +"
-    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["sw"]))) + "*" + "(" + str(int(not bool(BRA_massif["risque"]["pente"]["s"]))) + "*" + str(int(not bool(BRA_massif["risque"]["pente"]["w"]))) + ") * " + ORIENTATION_DICT["sw"] + " * 3)"
-    #W
-    formula += " + (" + str(int(bool(BRA_massif["risque"]["pente"]["w"]))) + "*" + ORIENTATION_DICT["w"] + ") + "
-    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["w"]))) + "*" + "(" + str(int(bool(BRA_massif["risque"]["pente"]["nw"]))) + " OR " + str(int(bool(BRA_massif["risque"]["pente"]["sw"]))) + ") * "+ ORIENTATION_DICT["w"] + " * 2) +"
-    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["w"]))) + "*" + "(" + str(int(not bool(BRA_massif["risque"]["pente"]["nw"]))) + "*" + str(int(not bool(BRA_massif["risque"]["pente"]["sw"]))) + ") * " + ORIENTATION_DICT["w"] + " * 3)"
-    #NW
-    formula += " + (" + str(int(bool(BRA_massif["risque"]["pente"]["nw"]))) + "*" + ORIENTATION_DICT["nw"] + ") + "
-    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["nw"]))) + "*" + "(" + str(int(bool(BRA_massif["risque"]["pente"]["w"]))) + " OR " + str(int(bool(BRA_massif["risque"]["pente"]["n"])))+ ") * "+ ORIENTATION_DICT["nw"] + " * 2) +"
-    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["nw"]))) + "*" + "(" + str(int(not bool(BRA_massif["risque"]["pente"]["w"])) )+ "*" + str(int(not bool(BRA_massif["risque"]["pente"]["n"])))+ ") * " + ORIENTATION_DICT["nw"] + " * 3)"
-    #N
-    formula += " + (" + str(int(bool(BRA_massif["risque"]["pente"]["n"])))+ "*" + ORIENTATION_DICT["n"] + ") + "
-    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["n"])))+ "*" + "(" + str(int(bool(BRA_massif["risque"]["pente"]["nw"]))) + " OR " + str(int(bool(BRA_massif["risque"]["pente"]["ne"])))+ ") * "+ ORIENTATION_DICT["n"] + " * 2) +"
-    formula += "(" + str(int(not bool(BRA_massif["risque"]["pente"]["n"])))+ "*" + "(" + str(int(not bool(BRA_massif["risque"]["pente"]["nw"]))) + "*" + str(int(not bool(BRA_massif["risque"]["pente"]["ne"])))+ ") * " + ORIENTATION_DICT["n"] + " * 3))"    
-
-    formula += ")"
-
-    '''
 
     # Chemin de sortie de la couche
     output_path = PATH_TO_OPERA_PLUGIN + '/tmp/' + massif_travail + '/mrp' + '.tif'
@@ -686,9 +660,11 @@ def MRP(BRA_massif,slope_map_path, full_dem_path, aspect_map_path, massif_travai
     fcn = QgsColorRampShader()
     fcn.setColorRampType(QgsColorRampShader.INTERPOLATED)
     # Couleurs en fonction de la valeur du pixel
-    lst = [ QgsColorRampShader.ColorRampItem(0, QColor(0,255,0,0)), QgsColorRampShader.ColorRampItem(0.99, QColor(0,255,0,0)), 
-            QgsColorRampShader.ColorRampItem(1, RISK_COLOR_DICT['2']), QgsColorRampShader.ColorRampItem(4, RISK_COLOR_DICT['4']), 
-            QgsColorRampShader.ColorRampItem(8, RISK_COLOR_DICT['5'])]
+    lst = [ QgsColorRampShader.ColorRampItem(0, QColor(0,255,0,0)), 
+            QgsColorRampShader.ColorRampItem(0.99, QColor(0,255,0,0), "Risque résiduel :"), 
+            QgsColorRampShader.ColorRampItem(1, RISK_COLOR_DICT['2'], "1"), 
+            QgsColorRampShader.ColorRampItem(4, RISK_COLOR_DICT['4'], "4"), 
+            QgsColorRampShader.ColorRampItem(8, RISK_COLOR_DICT['5'], "8")]
     fcn.setColorRampItemList(lst)
     shader = QgsRasterShader()
     shader.setRasterShaderFunction(fcn)
