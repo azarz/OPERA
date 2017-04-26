@@ -45,7 +45,9 @@ from qgis.utils import iface
 PATH_TO_OPERA_PLUGIN = "/home/dpts/.qgis2/python/plugins/Opera"
 
 # Dictionnaire associant une couleur à un risque
-RISK_COLOR_DICT = {'1': QColor(202,219,68,255), '2': QColor(255,241,0,255), '3': QColor(247,148,29,255), '4': QColor(238,28,27,255), '5': QColor(190,30,46,255)}
+RISK_COLOR_DICT = {'1': QColor(202,219,68,230), '2': QColor(255,241,0,230), '3': QColor(247,148,29,230), '4': QColor(238,28,27,230), '5': QColor(190,30,46,230)}
+# Dictionnaire associant une couleur à un risque lorsqu'on est dans la partie noir de la rose des vents
+RISK_ORIENT_COLOR_DICT = {'1': QColor(172,189,38,255), '2': QColor(229,187,0,255), '3': QColor(255,87,15,255), '4': QColor(200,18,17,255), '5': QColor(0,0,0,255)}
 
 #Dictionnaire associant à une orientation la tranche en degré correspondant
 ORIENTATION_DICT = {"ne" : "(ori@1 >= 22.5 AND ori@1 <67.5)",
@@ -413,22 +415,19 @@ class Opera:
                 bulletin_massif["risque"]["pente"]["e"] = self.dlg.E.isChecked()
                 bulletin_massif["risque"]["pente"]["s"] = self.dlg.S.isChecked()
 
-            bar.increaseValue()
-
             #Lancement de l'algorithme de Munter correspondant au niveau choisi et affichage de la couche obtenue
             if niv_methode == "radio_MRD":
                 print('MRD')
-                mapRiskLayer, riskRenderer = MRDMRE(bulletin_massif,slope_path,mnt_path, massif_travail)
+                mapRiskLayer, riskRenderer = MRD(bulletin_massif,slope_path,mnt_path, massif_travail)
                 
             elif niv_methode == "radio_MRE":
                 print('MRE')
-                mapRiskLayer, riskRenderer = MRDMRE(bulletin_massif,slope_path,mnt_path, massif_travail, True)
+                mapRiskLayer, riskRenderer = MRE(bulletin_massif,slope_path,mnt_path, aspect_path, massif_travail)
 
             else:
                 print('MRP')
                 mapRiskLayer, riskRenderer = MRP(bulletin_massif,slope_path,mnt_path, aspect_path, massif_travail)
 
-            bar.increaseValue()
 
             # Si l'on procède sur toute la zone, on affiche toute la zone, sinon, on n'affiche que le chemin
             if not self.dlg.chemin_chkbx.isChecked():
@@ -440,13 +439,11 @@ class Opera:
                 linearLayer = self.dlg.couche_chemin.itemData(indexCouche)
                 risk_path(linearLayer, mapRiskLayer, riskRenderer)
 
-            bar.increaseValue()
-
             print("hey")
 
 
 
-def MRDMRE(BRA_massif, slope_map_path, full_dem_path, massif_travail, MRE=False):
+def MRD(BRA_massif, slope_map_path, full_dem_path, massif_travail):
     """
     Application de la méthode de réduction pour débutants ou élémentaire. Ajoute à la carte QGIS une carte quasi-binaire des régions
     dangereuses (2 en altitude haute, 1 sinon) ou non (0)
@@ -462,9 +459,6 @@ def MRDMRE(BRA_massif, slope_map_path, full_dem_path, massif_travail, MRE=False)
 
     :param massif_travail: chaîne de caractères correspondant au massif de travail
     :type massif_travail: str
-
-    :param MRE: booléen qui est Vrai si la méthode utilisée est la MRE, et Faux si c'est la MRD
-    :type MRE: bool
 
     :returns: Tuple de la couche de risque en sortie et de son style (renderer)
     :rtype: QgsRasterLayer, QgsSingleBandPseudoColorRenderer
@@ -501,14 +495,9 @@ def MRDMRE(BRA_massif, slope_map_path, full_dem_path, massif_travail, MRE=False)
     else:
         risque_alt = risque
 
-    # Ajout du terme de difficulté : la MRE permet d'accéder à des pentes supérieures de 5° à la MRD   
-    method_type = ""
-    if MRE:
-        terme_difficulte = 5.
-        method_type = "mre"
-    else:
-        terme_difficulte = 0.
-        method_type = "mrd"
+    # Ajout du terme de difficulté : la MRE permet d'accéder à des pentes supérieures de 5° à la MRD
+    terme_difficulte = 0.
+    method_type = "mrd"
 
 
 
@@ -524,7 +513,10 @@ def MRDMRE(BRA_massif, slope_map_path, full_dem_path, massif_travail, MRE=False)
     formula+= "2 * (slope@1 >= " + str(30. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 3) + " #Cas de l'altitude haute
     # Cas du risque 4:
     formula+= "(slope@1 >= " + str(25. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 4) + " # Cas de l'altitude basse
-    formula+= "2 * (slope@1 >= " + str(25. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 4)" #Cas de l'altitude haute
+    formula+= "2 * (slope@1 >= " + str(25. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 4) +" #Cas de l'altitude haute
+    # Cas du risque 5:
+    formula+= "(slope@1 >= " + str(15. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 5) + " # Cas de l'altitude basse
+    formula+= "2 * (slope@1 >= " + str(15. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 5)" #Cas de l'altitude haute
 
     # Chemin de sortie de la couche
     output_path = PATH_TO_OPERA_PLUGIN + '/tmp/' + massif_travail + '/' + method_type + '.tif'
@@ -551,7 +543,138 @@ def MRDMRE(BRA_massif, slope_map_path, full_dem_path, massif_travail, MRE=False)
     shader.setRasterShaderFunction(fcn)
     # On associe le style à la couche
     renderer = QgsSingleBandPseudoColorRenderer(output_map.dataProvider(), 1, shader)
-    renderer.setOpacity(0.5)
+    renderer.setOpacity(0.65)
+    output_map.setRenderer(renderer)
+
+    # On retourne la couche de sortie et son style
+    return output_map, lst
+
+
+
+def MRE(BRA_massif, slope_map_path, full_dem_path, aspect_map_path, massif_travail):
+    """
+    Application de la méthode de réduction pour débutants ou élémentaire. Ajoute à la carte QGIS une carte quasi-binaire des régions
+    dangereuses (2 en altitude haute, 1 sinon) ou non (0)
+
+    :param BRA_massif: dictionnaire issu de BRA correspondant au massif de travail
+    :type BRA_massif: dict
+
+    :param slope_map_path: chaîne de caractères correspondant au chemin de la carte des pentes
+    :type slope_map_path: str
+
+    :param full_dem_path: chaîne de caractères correspondant au chemin du MNT du massif
+    :type full_dem_path: str
+
+    :param massif_travail: chaîne de caractères correspondant au massif de travail
+    :type massif_travail: str
+
+    :returns: Tuple de la couche de risque en sortie et de son style (renderer)
+    :rtype: QgsRasterLayer, QgsSingleBandPseudoColorRenderer
+    """
+
+    # On importe la carte des pentes et le MNT
+    slope_map = QgsRasterLayer(slope_map_path, "slopes")
+    full_dem = QgsRasterLayer(full_dem_path, "full_dem")
+    aspect_map = QgsRasterLayer(aspect_map_path, "aspects")
+
+    # List des entrées de la calculatrice raster
+    entries = []
+    # Définition des pentes
+    slopes = QgsRasterCalculatorEntry()
+    slopes.ref = 'slope@1'
+    slopes.raster = slope_map
+    slopes.bandNumber = 1
+    entries.append(slopes)
+    # Définition des altitudes
+    altitude = QgsRasterCalculatorEntry()
+    altitude.ref = 'alti@1'
+    altitude.raster = full_dem
+    altitude.bandNumber = 1
+    entries.append(altitude)
+
+    #Définition des orientations
+    orientation = QgsRasterCalculatorEntry()
+    orientation.ref = 'ori@1'
+    orientation.raster = aspect_map
+    orientation.bandNumber = 1
+    entries.append(orientation)
+
+
+    # Extraction du risque depuis le BRA : maximum entre le risque initial et le risque évolution (qui vaut 0 s'il n'y a pas d'évolution)
+    risque = str(max(BRA_massif["risque"]["evolution"]["risqueEvolution"], BRA_massif["risque"]["evolution"]["risqueInitial"]))
+
+    # Extraction du seuil d'altitude. Vaut 0 si ça ne dépend pas de l'altitude
+    altitudeThreshold = str(BRA_massif["risque"]["evolution"]["altitudeThreshold"]) 
+
+    # Extraction du risque en altitude. S'il n'y a qu'un seul niveau de risque en fonction de l'altitude, on prend donc le même risque.
+    if BRA_massif["risque"]["evolution"]["altitudeDependant"]:
+        risque_alt = str(max(BRA_massif["risque"]["evolution"]["risqueEvolutionHighAltitude"], BRA_massif["risque"]["evolution"]["risqueInitialHighAltitude"]))
+    else:
+        risque_alt = risque
+
+    # Ajout du terme de difficulté : la MRE permet d'accéder à des pentes supérieures de 5° à la MRD   
+    terme_difficulte = 5.
+    method_type = "mre"
+
+
+
+    #Définition de la formule, elle vaut 0 si l'on peut skier, 1 si l'on ne peut pas skier en altitude basse et 2 si l'on ne peut pas skier en altitude haute (*3 si on est dans les mauvaises orientations)
+    # Cas du risque 1:
+    formula = "((slope@1 >= " + str(40. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 1) + " # Cas de l'altitude basse
+    formula+= "2 * (slope@1 >= " + str(40. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 1) + " #Cas de l'altitude haute
+    # Cas du risque 2:
+    formula+= "(slope@1 >= " + str(35. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 2) + " # Cas de l'altitude basse
+    formula+= "2 * (slope@1 >= " + str(35. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 2) + " #Cas de l'altitude haute
+    # Cas du risque 3:
+    formula+= "(slope@1 >= " + str(30. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 3) + " # Cas de l'altitude basse
+    formula+= "2 * (slope@1 >= " + str(30. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 3) + " #Cas de l'altitude haute
+    # Cas du risque 4:
+    formula+= "(slope@1 >= " + str(25. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 4) + " # Cas de l'altitude basse
+    formula+= "2 * (slope@1 >= " + str(25. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 4) +" #Cas de l'altitude haute
+    # Cas du risque 5:
+    formula+= "(slope@1 >= " + str(15. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 5) + " # Cas de l'altitude basse
+    formula+= "2 * (slope@1 >= " + str(15. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 5))" #Cas de l'altitude haute
+    #Prise en compte de l'orientation
+    formula+= " * " 
+    #S
+    formula += " (3*(" + str(int(bool(BRA_massif["risque"]["pente"]["s"]))) + "*" + ORIENTATION_DICT["s"] + ") + "
+    #SW
+    formula += " + 3*(" + str(int(bool(BRA_massif["risque"]["pente"]["sw"]))) + "*" + ORIENTATION_DICT["sw"] + ") + "
+    #W
+    formula += " + 3*(" + str(int(bool(BRA_massif["risque"]["pente"]["w"]))) + "*" + ORIENTATION_DICT["w"] + ") + "
+    #NW
+    formula += " + 3*(" + str(int(bool(BRA_massif["risque"]["pente"]["nw"]))) + "*" + ORIENTATION_DICT["nw"] + ") + "
+    #N
+    formula += " + 3*(" + str(int(bool(BRA_massif["risque"]["pente"]["n"])))+ "*" + ORIENTATION_DICT["n"] + "))"
+
+    # Chemin de sortie de la couche
+    output_path = PATH_TO_OPERA_PLUGIN + '/tmp/' + massif_travail + '/' + method_type + '.tif'
+    # Définition de l'instance de RasterCalculator à partir de la formule définie au dessus, et des dimensions de la carte des pentes
+    calc = QgsRasterCalculator( formula, 
+        output_path, 'GTiff', slope_map.extent(), slope_map.width(), slope_map.height(), entries)
+    # On effectue le calcul
+    calc.processCalculation()
+
+    # On importe la carte obtenue en tant que couche QGIS
+    layer_name = "output_" + method_type
+
+    output_map = QgsRasterLayer(output_path, layer_name)
+
+    # Définition du style d'affichage
+    fcn = QgsColorRampShader()
+    fcn.setColorRampType(QgsColorRampShader.INTERPOLATED)
+    # Couleurs en fonction du risque et de la valeur du pixel
+    lst = [ QgsColorRampShader.ColorRampItem(0, QColor(255,255,255,0)),
+            QgsColorRampShader.ColorRampItem(1, RISK_COLOR_DICT[risque], "zone risque " + risque), 
+            QgsColorRampShader.ColorRampItem(3, RISK_ORIENT_COLOR_DICT[risque], "zone risque " + risque + " mauvaise orientation"), 
+            QgsColorRampShader.ColorRampItem(2, RISK_COLOR_DICT[risque_alt], "zone risque " + risque_alt), 
+            QgsColorRampShader.ColorRampItem(6, RISK_ORIENT_COLOR_DICT[risque_alt], "zone risque " + risque_alt + " mauvaise orientation") ]
+    fcn.setColorRampItemList(lst)
+    shader = QgsRasterShader()
+    shader.setRasterShaderFunction(fcn)
+    # On associe le style à la couche
+    renderer = QgsSingleBandPseudoColorRenderer(output_map.dataProvider(), 1, shader)
+    renderer.setOpacity(0.65)
     output_map.setRenderer(renderer)
 
     # On retourne la couche de sortie et son style
@@ -670,7 +793,7 @@ def MRP(BRA_massif,slope_map_path, full_dem_path, aspect_map_path, massif_travai
     shader.setRasterShaderFunction(fcn)
     # On associe le style à la couche
     renderer = QgsSingleBandPseudoColorRenderer(output_map.dataProvider(), 1, shader)
-    renderer.setOpacity(0.5)
+    renderer.setOpacity(0.65)
     output_map.setRenderer(renderer)
 
     # On retourne la couche de sortie et son style
@@ -717,6 +840,7 @@ def risk_path(linearLayer, mapRiskLayer, riskRenderer):
     shader.setRasterShaderFunction(fcn)
     # On associe le style à la couche
     renderer = QgsSingleBandPseudoColorRenderer(path_raster.dataProvider(), 1, shader)
+    renderer.setOpacity(1.1)
     path_raster.setRenderer(renderer)
     
     QgsMapLayerRegistry.instance().addMapLayer(path_raster)
