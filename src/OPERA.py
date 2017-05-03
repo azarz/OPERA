@@ -47,7 +47,7 @@ PATH_TO_OPERA_PLUGIN = "/home/dpts/.qgis2/python/plugins/Opera"
 # Dictionnaire associant une couleur à un risque
 RISK_COLOR_DICT = {'1': QColor(202,219,68,230), '2': QColor(255,241,0,230), '3': QColor(247,148,29,230), '4': QColor(238,28,27,230), '5': QColor(190,30,46,230)}
 # Dictionnaire associant une couleur à un risque lorsqu'on est dans la partie noir de la rose des vents
-RISK_ORIENT_COLOR_DICT = {'1': QColor(172,189,38,255), '2': QColor(229,187,0,255), '3': QColor(255,87,15,255), '4': QColor(200,18,17,255), '5': QColor(0,0,0,255)}
+RISK_ORIENT_COLOR_DICT = {'1': QColor(165,179,35,255), '2': QColor(229,187,0,255), '3': QColor(255,87,15,255), '4': QColor(186,15,15,255), '5': QColor(0,0,0,255)}
 
 #Dictionnaire associant à une orientation la tranche en degré correspondant
 ORIENTATION_DICT = {"ne" : "(ori@1 >= 22.5 AND ori@1 <67.5)",
@@ -635,17 +635,17 @@ def MRE(BRA_massif, slope_map_path, full_dem_path, aspect_map_path, massif_trava
     formula+= "(slope@1 >= " + str(15. + terme_difficulte) + ") * (alti@1 < " + altitudeThreshold + ") * (" + risque + " = 5) + " # Cas de l'altitude basse
     formula+= "2 * (slope@1 >= " + str(15. + terme_difficulte) + ") * (alti@1 >= " + altitudeThreshold + ") * (" + risque_alt + " = 5))" #Cas de l'altitude haute
     #Prise en compte de l'orientation
-    formula+= " * " 
+    formula+= " + " 
     #S
-    formula += " (3*(" + str(int(bool(BRA_massif["risque"]["pente"]["s"]))) + "*" + ORIENTATION_DICT["s"] + ") + "
+    formula += " (.5*(" + str(int(bool(BRA_massif["risque"]["pente"]["s"]))) + "*" + ORIENTATION_DICT["s"] + ") + "
     #SW
-    formula += " + 3*(" + str(int(bool(BRA_massif["risque"]["pente"]["sw"]))) + "*" + ORIENTATION_DICT["sw"] + ") + "
+    formula += " + .5*(" + str(int(bool(BRA_massif["risque"]["pente"]["sw"]))) + "*" + ORIENTATION_DICT["sw"] + ") + "
     #W
-    formula += " + 3*(" + str(int(bool(BRA_massif["risque"]["pente"]["w"]))) + "*" + ORIENTATION_DICT["w"] + ") + "
+    formula += " + .5*(" + str(int(bool(BRA_massif["risque"]["pente"]["w"]))) + "*" + ORIENTATION_DICT["w"] + ") + "
     #NW
-    formula += " + 3*(" + str(int(bool(BRA_massif["risque"]["pente"]["nw"]))) + "*" + ORIENTATION_DICT["nw"] + ") + "
+    formula += " + .5*(" + str(int(bool(BRA_massif["risque"]["pente"]["nw"]))) + "*" + ORIENTATION_DICT["nw"] + ") + "
     #N
-    formula += " + 3*(" + str(int(bool(BRA_massif["risque"]["pente"]["n"])))+ "*" + ORIENTATION_DICT["n"] + "))"
+    formula += " + .5*(" + str(int(bool(BRA_massif["risque"]["pente"]["n"])))+ "*" + ORIENTATION_DICT["n"] + "))"
 
     # Chemin de sortie de la couche
     output_path = PATH_TO_OPERA_PLUGIN + '/tmp/' + massif_travail + '/' + method_type + '.tif'
@@ -665,10 +665,11 @@ def MRE(BRA_massif, slope_map_path, full_dem_path, aspect_map_path, massif_trava
     fcn.setColorRampType(QgsColorRampShader.INTERPOLATED)
     # Couleurs en fonction du risque et de la valeur du pixel
     lst = [ QgsColorRampShader.ColorRampItem(0, QColor(255,255,255,0)),
+            QgsColorRampShader.ColorRampItem(0.5, QColor(255,255,255,0)),
             QgsColorRampShader.ColorRampItem(1, RISK_COLOR_DICT[risque], "zone risque " + risque), 
-            QgsColorRampShader.ColorRampItem(3, RISK_ORIENT_COLOR_DICT[risque], "zone risque " + risque + " mauvaise orientation"), 
+            QgsColorRampShader.ColorRampItem(1.5, RISK_ORIENT_COLOR_DICT[risque], "zone risque " + risque + " mauvaise orientation"), 
             QgsColorRampShader.ColorRampItem(2, RISK_COLOR_DICT[risque_alt], "zone risque " + risque_alt), 
-            QgsColorRampShader.ColorRampItem(6, RISK_ORIENT_COLOR_DICT[risque_alt], "zone risque " + risque_alt + " mauvaise orientation") ]
+            QgsColorRampShader.ColorRampItem(2.5, RISK_ORIENT_COLOR_DICT[risque_alt], "zone risque " + risque_alt + " mauvaise orientation") ]
     fcn.setColorRampItemList(lst)
     shader = QgsRasterShader()
     shader.setRasterShaderFunction(fcn)
