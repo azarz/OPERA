@@ -45,9 +45,9 @@ from qgis.utils import iface
 PATH_TO_OPERA_PLUGIN = "/home/dpts/.qgis2/python/plugins/Opera"
 
 # Dictionnaire associant une couleur à un risque
-RISK_COLOR_DICT = {'1': QColor(202,219,68,230), '2': QColor(255,241,0,230), '3': QColor(247,148,29,230), '4': QColor(238,28,27,230), '5': QColor(190,30,46,230)}
+RISK_COLOR_DICT = {'1': QColor(202,219,68,230), '2': QColor(255,241,0,230), '3': QColor(247,148,29,230), '4': QColor(238,28,27,230), '5': QColor(0,0,0,255)}
 # Dictionnaire associant une couleur à un risque lorsqu'on est dans la partie noir de la rose des vents
-RISK_ORIENT_COLOR_DICT = {'1': QColor(165,179,35,255), '2': QColor(229,187,0,255), '3': QColor(255,87,15,255), '4': QColor(186,15,15,255), '5': QColor(0,0,0,255)}
+RISK_ORIENT_COLOR_DICT = {'1': QColor(165,179,35,255), '2': QColor(229,187,0,255), '3': QColor(255,87,15,255), '4': QColor(161,13,13,255), '5': QColor(0,0,0,255)}
 
 #Dictionnaire associant à une orientation la tranche en degré correspondant
 ORIENTATION_DICT = {"ne" : "(ori@1 >= 22.5 AND ori@1 <67.5)",
@@ -222,14 +222,14 @@ class Opera:
         self.dlg.couche_chemin.setEnabled(self.dlg.chemin_chkbx.isChecked())
 
         # Pour le BRA
-        self.dlg.NE.setEnabled(not self.dlg.checkBox.isChecked() and not self.dlg.radio_MRP.isChecked())
-        self.dlg.N.setEnabled(not self.dlg.checkBox.isChecked() and not self.dlg.radio_MRP.isChecked())
-        self.dlg.NO.setEnabled(not self.dlg.checkBox.isChecked() and not self.dlg.radio_MRP.isChecked())
-        self.dlg.SE.setEnabled(not self.dlg.checkBox.isChecked() and not self.dlg.radio_MRP.isChecked())
-        self.dlg.SO.setEnabled(not self.dlg.checkBox.isChecked() and not self.dlg.radio_MRP.isChecked())
-        self.dlg.O.setEnabled(not self.dlg.checkBox.isChecked() and not self.dlg.radio_MRP.isChecked())
-        self.dlg.E.setEnabled(not self.dlg.checkBox.isChecked() and not self.dlg.radio_MRP.isChecked())
-        self.dlg.S.setEnabled(not self.dlg.checkBox.isChecked() and not self.dlg.radio_MRP.isChecked())
+        self.dlg.NE.setEnabled(self.dlg.radio_MRE.isChecked())
+        self.dlg.N.setEnabled(self.dlg.radio_MRE.isChecked())
+        self.dlg.NO.setEnabled(self.dlg.radio_MRE.isChecked())
+        self.dlg.SE.setEnabled(self.dlg.radio_MRE.isChecked())
+        self.dlg.SO.setEnabled(self.dlg.radio_MRE.isChecked())
+        self.dlg.O.setEnabled(self.dlg.radio_MRE.isChecked())
+        self.dlg.E.setEnabled(self.dlg.radio_MRE.isChecked())
+        self.dlg.S.setEnabled(self.dlg.radio_MRE.isChecked())
         self.dlg.riskLow.setEnabled(not self.dlg.checkBox.isChecked())
         self.dlg.riskHigh.setEnabled(not self.dlg.checkBox.isChecked())
         self.dlg.altiThresh.setEnabled(not self.dlg.checkBox.isChecked())
@@ -788,7 +788,7 @@ def MRP(BRA_massif,slope_map_path, full_dem_path, aspect_map_path, massif_travai
             QgsColorRampShader.ColorRampItem(0.99, QColor(0,255,0,0), "Risque résiduel :"), 
             QgsColorRampShader.ColorRampItem(1, RISK_COLOR_DICT['2'], "1"), 
             QgsColorRampShader.ColorRampItem(4, RISK_COLOR_DICT['4'], "4"), 
-            QgsColorRampShader.ColorRampItem(8, RISK_COLOR_DICT['5'], "8")]
+            QgsColorRampShader.ColorRampItem(8, QColor(190,30,46,255), "8")]
     fcn.setColorRampItemList(lst)
     shader = QgsRasterShader()
     shader.setRasterShaderFunction(fcn)
