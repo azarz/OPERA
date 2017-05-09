@@ -262,9 +262,6 @@ class Opera:
         # En appuyant sur la touche OK :
         if result:
 
-            #test pop up
-            self.iface.actionIdentify().trigger()
-
             #Recupération du massif sur lequel on travaille
             massif_travail = self.dlg.massifs.currentText()
             massif_travail = massif_travail.lower()
