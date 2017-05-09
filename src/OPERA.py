@@ -262,6 +262,9 @@ class Opera:
         # En appuyant sur la touche OK :
         if result:
 
+            #test pop up
+            self.iface.actionIdentify().trigger()
+
             #Recupération du massif sur lequel on travaille
             massif_travail = self.dlg.massifs.currentText()
             massif_travail = massif_travail.lower()
@@ -763,7 +766,7 @@ def MRP(BRA_massif,slope_map_path, full_dem_path, aspect_map_path, massif_travai
 
     # Coefficient d'orientation
     formula += "* ( 3 * (ori@1 > 112.5 AND ori@1 < 292.5)"
-    formula += " + 2 * ((ori@1 > 67.5 AND ori@1 <=112.5) OR (ori@1 >= 292.5 AND ori@1 <315))"
+    formula += " + 2 * ((ori@1 > 45 AND ori@1 <=112.5) OR (ori@1 >= 292.5 AND ori@1 <315)  )"
     formula += " + ((ori@1 > 0 AND ori@1 <= 45 ) OR ( ori@1 >= 315 AND ori@1 <= 360 )))"
     formula += ")"
 
