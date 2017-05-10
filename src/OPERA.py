@@ -222,14 +222,14 @@ class Opera:
         self.dlg.couche_chemin.setEnabled(self.dlg.chemin_chkbx.isChecked())
 
         # Pour le BRA
-        self.dlg.NE.setEnabled(self.dlg.radio_MRE.isChecked())
-        self.dlg.N.setEnabled(self.dlg.radio_MRE.isChecked())
-        self.dlg.NO.setEnabled(self.dlg.radio_MRE.isChecked())
-        self.dlg.SE.setEnabled(self.dlg.radio_MRE.isChecked())
-        self.dlg.SO.setEnabled(self.dlg.radio_MRE.isChecked())
-        self.dlg.O.setEnabled(self.dlg.radio_MRE.isChecked())
-        self.dlg.E.setEnabled(self.dlg.radio_MRE.isChecked())
-        self.dlg.S.setEnabled(self.dlg.radio_MRE.isChecked())
+        self.dlg.NE.setEnabled(self.dlg.radio_MRE.isChecked() and not self.dlg.checkBox.isChecked())
+        self.dlg.N.setEnabled(self.dlg.radio_MRE.isChecked() and not self.dlg.checkBox.isChecked())
+        self.dlg.NO.setEnabled(self.dlg.radio_MRE.isChecked() and not self.dlg.checkBox.isChecked())
+        self.dlg.SE.setEnabled(self.dlg.radio_MRE.isChecked() and not self.dlg.checkBox.isChecked())
+        self.dlg.SO.setEnabled(self.dlg.radio_MRE.isChecked() and not self.dlg.checkBox.isChecked())
+        self.dlg.O.setEnabled(self.dlg.radio_MRE.isChecked() and not self.dlg.checkBox.isChecked())
+        self.dlg.E.setEnabled(self.dlg.radio_MRE.isChecked() and not self.dlg.checkBox.isChecked())
+        self.dlg.S.setEnabled(self.dlg.radio_MRE.isChecked() and not self.dlg.checkBox.isChecked())
         self.dlg.riskLow.setEnabled(not self.dlg.checkBox.isChecked())
         self.dlg.riskHigh.setEnabled(not self.dlg.checkBox.isChecked())
         self.dlg.altiThresh.setEnabled(not self.dlg.checkBox.isChecked())
@@ -373,7 +373,8 @@ class Opera:
             # Si l'on charge le BRA automatiquement
             if self.dlg.checkBox.isChecked():
                 # URL correspondant au JSON décrivant le BRA, les 2 derniers chiffres correspondant au numéro de département
-                url_meteo_fr = "http://www.meteofrance.com/mf3-rpc-portlet/rest/enneigement/bulletins/cartouches/AVDEPT05"
+                #url_meteo_fr = "http://www.meteofrance.com/mf3-rpc-portlet/rest/enneigement/bulletins/cartouches/AVDEPT05"
+                url_meteo_fr = "/home/dpts/Bureau/Lien vers plugins/Opera/src/AVDEPT05.json"
                 # On convertit la réponse en un dictionnaire Python
                 response = urllib.urlopen(url_meteo_fr)
                 bulletin_json = json.loads(response.read())
@@ -798,7 +799,7 @@ def MRP(BRA_massif,slope_map_path, full_dem_path, aspect_map_path, massif_travai
     output_map.setRenderer(renderer)
 
     # On retourne la couche de sortie et son style
-    return output_map, renderer
+    return output_map, lst
 
 
 

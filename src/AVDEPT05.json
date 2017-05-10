@@ -1,24 +1,24 @@
 [ {
   "risque" : {
     "evolution" : {
-      "risqueInitial" : 3,
+      "risqueInitial" : 2,
       "risqueEvolution" : 0,
-      "altitudeThreshold" : 0,
-      "risqueInitialHighAltitude" : 0,
+      "altitudeThreshold" : 2000,
+      "risqueInitialHighAltitude" : 3,
       "risqueEvolutionHighAltitude" : 0,
       "commentaire" : "Risque marqué.",
       "evolving" : false,
-      "altitudeDependant" : false,
+      "altitudeDependant" : true,
       "evolvingHighAltitude" : false
     },
     "pente" : {
       "commentaire" : "",
       "ne" : true,
-      "e" : true,
-      "se" : true,
-      "s" : true,
-      "sw" : true,
-      "w" : true,
+      "e" : false,
+      "se" : false,
+      "s" : false,
+      "sw" : false,
+      "w" : false,
       "nw" : true,
       "n" : true
     },
@@ -59,24 +59,24 @@
 }, {
   "risque" : {
     "evolution" : {
-      "risqueInitial" : 3,
+      "risqueInitial" : 2,
       "risqueEvolution" : 0,
-      "altitudeThreshold" : 0,
-      "risqueInitialHighAltitude" : 0,
+      "altitudeThreshold" : 2000,
+      "risqueInitialHighAltitude" : 3,
       "risqueEvolutionHighAltitude" : 0,
       "commentaire" : "Risque marqué.",
       "evolving" : false,
-      "altitudeDependant" : false,
+      "altitudeDependant" : true,
       "evolvingHighAltitude" : false
     },
     "pente" : {
       "commentaire" : "",
       "ne" : true,
-      "e" : true,
-      "se" : true,
-      "s" : true,
-      "sw" : true,
-      "w" : true,
+      "e" : false,
+      "se" : false,
+      "s" : false,
+      "sw" : false,
+      "w" : false,
       "nw" : true,
       "n" : true
     },
@@ -117,24 +117,24 @@
 }, {
   "risque" : {
     "evolution" : {
-      "risqueInitial" : 3,
+      "risqueInitial" : 2,
       "risqueEvolution" : 0,
-      "altitudeThreshold" : 0,
-      "risqueInitialHighAltitude" : 0,
+      "altitudeThreshold" : 2000,
+      "risqueInitialHighAltitude" : 3,
       "risqueEvolutionHighAltitude" : 0,
       "commentaire" : "Risque marqué.",
       "evolving" : false,
-      "altitudeDependant" : false,
+      "altitudeDependant" : true,
       "evolvingHighAltitude" : false
     },
     "pente" : {
       "commentaire" : "",
       "ne" : true,
-      "e" : true,
-      "se" : true,
-      "s" : true,
-      "sw" : true,
-      "w" : true,
+      "e" : false,
+      "se" : false,
+      "s" : false,
+      "sw" : false,
+      "w" : false,
       "nw" : true,
       "n" : true
     },
@@ -175,24 +175,24 @@
 }, {
   "risque" : {
     "evolution" : {
-      "risqueInitial" : 3,
+      "risqueInitial" : 2,
       "risqueEvolution" : 0,
-      "altitudeThreshold" : 0,
-      "risqueInitialHighAltitude" : 0,
+      "altitudeThreshold" : 2000,
+      "risqueInitialHighAltitude" : 3,
       "risqueEvolutionHighAltitude" : 0,
       "commentaire" : "Risque marqué.",
       "evolving" : false,
-      "altitudeDependant" : false,
+      "altitudeDependant" : true,
       "evolvingHighAltitude" : false
     },
     "pente" : {
       "commentaire" : "",
       "ne" : true,
-      "e" : true,
-      "se" : true,
-      "s" : true,
-      "sw" : true,
-      "w" : true,
+      "e" : false,
+      "se" : false,
+      "s" : false,
+      "sw" : false,
+      "w" : false,
       "nw" : true,
       "n" : true
     },
@@ -233,24 +233,24 @@
 }, {
   "risque" : {
     "evolution" : {
-      "risqueInitial" : 3,
+      "risqueInitial" : 2,
       "risqueEvolution" : 0,
-      "altitudeThreshold" : 0,
-      "risqueInitialHighAltitude" : 0,
+      "altitudeThreshold" : 2000,
+      "risqueInitialHighAltitude" : 3,
       "risqueEvolutionHighAltitude" : 0,
       "commentaire" : "Risque marqué.",
       "evolving" : false,
-      "altitudeDependant" : false,
+      "altitudeDependant" : true,
       "evolvingHighAltitude" : false
     },
     "pente" : {
       "commentaire" : "",
       "ne" : true,
-      "e" : true,
-      "se" : true,
-      "s" : true,
-      "sw" : true,
-      "w" : true,
+      "e" : false,
+      "se" : false,
+      "s" : false,
+      "sw" : false,
+      "w" : false,
       "nw" : true,
       "n" : true
     },
@@ -291,24 +291,24 @@
 }, {
   "risque" : {
     "evolution" : {
-      "risqueInitial" : 3,
+      "risqueInitial" : 2,
       "risqueEvolution" : 0,
-      "altitudeThreshold" : 0,
-      "risqueInitialHighAltitude" : 0,
+      "altitudeThreshold" : 2000,
+      "risqueInitialHighAltitude" : 3,
       "risqueEvolutionHighAltitude" : 0,
       "commentaire" : "Risque marqué.",
       "evolving" : false,
-      "altitudeDependant" : false,
+      "altitudeDependant" : true,
       "evolvingHighAltitude" : false
     },
     "pente" : {
       "commentaire" : "",
       "ne" : true,
-      "e" : true,
-      "se" : true,
-      "s" : true,
-      "sw" : true,
-      "w" : true,
+      "e" : false,
+      "se" : false,
+      "s" : false,
+      "sw" : false,
+      "w" : false,
       "nw" : true,
       "n" : true
     },
