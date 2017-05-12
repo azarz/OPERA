@@ -432,6 +432,8 @@ class Opera:
 
             # Si l'on procède sur toute la zone, on affiche toute la zone, sinon, on n'affiche que le chemin
             if not self.dlg.chemin_chkbx.isChecked():
+                mapRiskLayer.setCustomProperty("embeddedWidgets/count", 1)
+                mapRiskLayer.setCustomProperty("embeddedWidgets/0/id", "transparency") 
                 QgsMapLayerRegistry.instance().addMapLayer(mapRiskLayer)
 
             else:
@@ -789,7 +791,7 @@ def MRP(BRA_massif,slope_map_path, full_dem_path, aspect_map_path, massif_travai
             QgsColorRampShader.ColorRampItem(0.99, QColor(0,255,0,0), "Risque résiduel :"), 
             QgsColorRampShader.ColorRampItem(1, RISK_COLOR_DICT['2'], "1"), 
             QgsColorRampShader.ColorRampItem(4, RISK_COLOR_DICT['4'], "4"), 
-            QgsColorRampShader.ColorRampItem(8, QColor(190,30,46,255), "8")]
+            QgsColorRampShader.ColorRampItem(8, QColor(190,30,46,230), "8")]
     fcn.setColorRampItemList(lst)
     shader = QgsRasterShader()
     shader.setRasterShaderFunction(fcn)
@@ -822,9 +824,8 @@ def risk_path(linearLayer, mapRiskLayer, riskRenderer):
         linLay = processing.runalg("qgis:reprojectlayer", linearLayer, "EPSG:2154", None)
         linearLayer = QgsVectorLayer(linLay['OUTPUT'], "chemin")
 
-    # Définition d'un buffer autour du chemin (distance de 2.5 mètres pour avoir une largeur de 5 mètres, résolution
-    # de la carte de risque)
-    buff = processing.runalg('qgis:fixeddistancebuffer', linearLayer, 2.5, 5, True, None)
+    # Définition d'un buffer autour du chemin (distance de 30 mètres pour avoir une largeur de 60 mètres)
+    buff = processing.runalg('qgis:fixeddistancebuffer', linearLayer, 30, 5, True, None)
     
     # "Emporte-pièce" de la carte de risque à partir du buffer obtenu
     path = processing.runalg('gdalogr:warpreproject', {"INPUT": mapRiskLayer, "SOURCE_SRS": "EPSG:2154", 
@@ -842,7 +843,7 @@ def risk_path(linearLayer, mapRiskLayer, riskRenderer):
     shader.setRasterShaderFunction(fcn)
     # On associe le style à la couche
     renderer = QgsSingleBandPseudoColorRenderer(path_raster.dataProvider(), 1, shader)
-    renderer.setOpacity(1.1)
+    renderer.setOpacity(1)
     path_raster.setRenderer(renderer)
     
     QgsMapLayerRegistry.instance().addMapLayer(path_raster)
