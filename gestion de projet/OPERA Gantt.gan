@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?><project name="Outil de Prévision Effective du Risque Avalanche (OPERA)" company="" webLink="http://" view-date="2016-12-01" view-index="0" gantt-divider-location="353" resource-divider-location="300" version="2.0" locale="fr">
+<?xml version="1.0" encoding="UTF-8"?><project name="Outil de Prévision Effective du Risque Avalanche (OPERA)" company="" webLink="http://" view-date="2017-02-27" view-index="0" gantt-divider-location="353" resource-divider-location="300" version="2.0" locale="fr">
     <description/>
-    <view zooming-state="default:8" id="gantt-chart">
+    <view zooming-state="default:6" id="gantt-chart">
         <field id="tpd3" name="Nom" width="57" order="0"/>
         <field id="tpd4" name="Date de début" width="21" order="1"/>
         <field id="tpd5" name="Date de fin" width="21" order="2"/>
@@ -50,10 +50,10 @@
             <task id="20" name="Programmation énergie (bonus)" color="#ffcc00" meeting="false" start="2017-05-09" duration="2" complete="0" expand="true"/>
         </task>
         <task id="33" name="Préparation soutenance" color="#111ed6" shape="0,1,1,1,1,0,0,0,1,0,0,0,1,0,0,0" meeting="false" start="2017-05-10" duration="4" complete="0" expand="true"/>
-        <task id="21" name="Skype avec commanditaires" color="#ff0000" shape="0,0,0,0,1,0,0,0,1,1,0,0,1,1,1,0" meeting="false" start="2017-03-22" duration="1" complete="0" expand="true"/>
-        <task id="23" name="Jalon 1 (retour MOA+commanditaire)" color="#fc0d0d" shape="1,1,1,0,1,1,0,0,1,0,0,0,0,0,0,0" meeting="false" start="2017-04-26" duration="1" complete="0" priority="2" expand="true"/>
-        <task id="24" name="Jalon 2" color="#ff0000" shape="1,1,1,0,1,1,0,0,1,0,0,0,0,0,0,0" meeting="false" start="2017-05-10" duration="1" complete="0" priority="2" expand="true"/>
-        <task id="25" name="Jalon 3 (soutenance)" color="#ff0000" shape="1,1,1,0,1,1,0,0,1,0,0,0,0,0,0,0" meeting="false" start="2017-05-17" duration="1" complete="0" priority="2" expand="true"/>
+        <task id="21" name="Skype avec commanditaires" color="#ff0000" shape="0,0,0,0,1,0,0,0,1,1,0,0,1,1,1,0" meeting="true" start="2017-03-22" duration="0" complete="0" expand="true"/>
+        <task id="23" name="Jalon 1 (retour MOA+commanditaire)" color="#fc0d0d" shape="1,1,1,0,1,1,0,0,1,0,0,0,0,0,0,0" meeting="true" start="2017-04-26" duration="0" complete="0" priority="2" expand="true"/>
+        <task id="24" name="Jalon 2" color="#ff0000" shape="1,1,1,0,1,1,0,0,1,0,0,0,0,0,0,0" meeting="true" start="2017-05-10" duration="0" complete="0" priority="2" expand="true"/>
+        <task id="25" name="Jalon 3 (soutenance)" color="#ff0000" shape="1,1,1,0,1,1,0,0,1,0,0,0,0,0,0,0" meeting="true" start="2017-05-17" duration="0" complete="0" priority="2" expand="true"/>
     </tasks>
     <resources>
         <resource id="0" name="Amaury" function="Default:0" contacts="" phone=""/>
